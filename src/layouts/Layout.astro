@@ -1,23 +1,217 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title = "Samuel Dyer — Creative Technologist" } = Astro.props;
+---
+
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
-		<slot />
-	</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <meta
+      name="description"
+      content="Samuel Dyer — engineer, creative technologist, and AR/VR visionary. Crafting immersive futures at the intersection of code and imagination."
+    />
+    <title>{title}</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Scanline overlay -->
+    <div class="scanlines" aria-hidden="true"></div>
+    <!-- Vignette -->
+    <div class="vignette" aria-hidden="true"></div>
+
+    <slot />
+  </body>
 </html>
 
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
+<style is:global>
+  /* ── CSS Custom Properties ── */
+  :root {
+    --col-bg: #0a0a0c;
+    --col-surface: #111116;
+    --col-surface-alt: #18181f;
+    --col-border: #2a2a35;
+    --col-text: #c8c8d0;
+    --col-text-dim: #6a6a78;
+    --col-heading: #e8e8f0;
+    --col-neon-green: #00ff41;
+    --col-neon-cyan: #00d4ff;
+    --col-neon-amber: #ff8800;
+    --col-neon-red: #ff2040;
+    --col-glow-green: rgba(0, 255, 65, 0.15);
+    --col-glow-cyan: rgba(0, 212, 255, 0.15);
+    --font-mono: "Share Tech Mono", "Courier New", monospace;
+    --font-display: "Orbitron", sans-serif;
+    --font-body: "Rajdhani", sans-serif;
+  }
+
+  /* ── Reset ── */
+  *,
+  *::before,
+  *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--col-neon-green) var(--col-bg);
+  }
+
+  body {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--col-text);
+    background: var(--col-bg);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Scanlines ── */
+  .scanlines {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.08) 2px,
+      rgba(0, 0, 0, 0.08) 4px
+    );
+    mix-blend-mode: multiply;
+  }
+
+  /* ── Vignette ── */
+  .vignette {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 50%,
+      rgba(0, 0, 0, 0.55) 100%
+    );
+  }
+
+  /* ── Typography ── */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    color: var(--col-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+  }
+
+  a {
+    color: var(--col-neon-cyan);
+    text-decoration: none;
+    transition: color 0.2s, text-shadow 0.2s;
+  }
+
+  a:hover {
+    color: var(--col-neon-green);
+    text-shadow: 0 0 8px var(--col-glow-green);
+  }
+
+  ::selection {
+    background: var(--col-neon-green);
+    color: var(--col-bg);
+  }
+
+  /* ── Utility: section wrapper ── */
+  .section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 100px 24px;
+    position: relative;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--col-neon-green);
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::before {
+    content: "//";
+    color: var(--col-text-dim);
+  }
+
+  .section-title {
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    margin-bottom: 40px;
+  }
+
+  /* ── Neon Divider ── */
+  .neon-divider {
+    border: none;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--col-neon-green),
+      var(--col-neon-cyan),
+      transparent
+    );
+    opacity: 0.4;
+    margin: 0;
+  }
+
+  /* ── Glow utilities ── */
+  .glow-green {
+    text-shadow: 0 0 10px var(--col-glow-green),
+      0 0 30px var(--col-glow-green);
+  }
+
+  .glow-cyan {
+    text-shadow: 0 0 10px var(--col-glow-cyan), 0 0 30px var(--col-glow-cyan);
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--col-bg);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--col-neon-green);
+    border-radius: 3px;
+  }
+
+  /* ── Responsive helper ── */
+  @media (max-width: 768px) {
+    .section {
+      padding: 60px 18px;
+    }
+  }
 </style>

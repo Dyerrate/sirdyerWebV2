@@ -1,0 +1,217 @@
+---
+const projects = [
+  {
+    title: "Spatial Canvas",
+    description:
+      "A WebXR experiment that turns any room into a collaborative 3D drawing space. Users sketch mid-air with hand tracking while spatial anchors persist their art in the real world.",
+    tags: ["WebXR", "Three.js", "Hand Tracking"],
+    status: "PROTOTYPE",
+    accent: "green",
+  },
+  {
+    title: "Ghost Layer",
+    description:
+      "An AR concept that overlays historical photographs onto their real-world locations, fading between past and present as you move through a city block. Memory made tangible.",
+    tags: ["ARKit", "Computer Vision", "Storytelling"],
+    status: "CONCEPT",
+    accent: "cyan",
+  },
+  {
+    title: "Pulse Terrain",
+    description:
+      "A generative VR landscape driven by biometric data — heart rate sculpts mountains, breathing controls weather. The environment becomes a living mirror of your body.",
+    tags: ["Unity", "Shader Graph", "Biometrics"],
+    status: "IN DEV",
+    accent: "amber",
+  },
+  {
+    title: "Signal // Noise",
+    description:
+      "An interactive installation where participants wear VR headsets and collaboratively reconstruct a fragmented digital world by communicating only through spatial audio cues.",
+    tags: ["Spatial Audio", "Multiplayer", "Installation"],
+    status: "EXHIBITED",
+    accent: "green",
+  },
+];
+
+const accentMap: Record<string, string> = {
+  green: "var(--col-neon-green)",
+  cyan: "var(--col-neon-cyan)",
+  amber: "var(--col-neon-amber)",
+};
+---
+
+<section id="projects">
+  <hr class="neon-divider" />
+  <div class="section">
+    <p class="section-label">Transmissions</p>
+    <h2 class="section-title">
+      Creative <span class="accent-green">Explorations</span>
+    </h2>
+
+    <p class="proj-intro">
+      Beyond the day job, these are the ideas I chase at night — prototypes,
+      concepts, and provocations at the edge of immersive technology. Some are
+      shipped, some are sketches. All of them ask: <em>what if?</em>
+    </p>
+
+    <div class="projects-grid">
+      {projects.map((p) => (
+        <article
+          class={`project-card accent-${p.accent}`}
+          style={`--card-accent: ${accentMap[p.accent]}`}
+        >
+          <div class="card-top">
+            <span class="project-status">{p.status}</span>
+            <span class="project-index">{`0${projects.indexOf(p) + 1}`}</span>
+          </div>
+          <h3 class="project-title">{p.title}</h3>
+          <p class="project-desc">{p.description}</p>
+          <div class="project-tags">
+            {p.tags.map((t) => (
+              <span class="p-tag">{t}</span>
+            ))}
+          </div>
+          <!-- Decorative corner -->
+          <div class="corner-tl" aria-hidden="true" />
+          <div class="corner-br" aria-hidden="true" />
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .accent-green {
+    color: var(--col-neon-green);
+    text-shadow: 0 0 20px rgba(0, 255, 65, 0.25);
+  }
+
+  .proj-intro {
+    max-width: 640px;
+    margin-bottom: 48px;
+    font-size: 1.05rem;
+  }
+
+  .proj-intro em {
+    color: var(--col-neon-cyan);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  /* ── Grid ── */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  /* ── Card ── */
+  .project-card {
+    border: 1px solid var(--col-border);
+    background: var(--col-surface);
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .project-card:hover {
+    border-color: var(--card-accent, var(--col-neon-green));
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.06);
+  }
+
+  /* Decorative corners */
+  .corner-tl,
+  .corner-br {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-color: var(--card-accent, var(--col-neon-green));
+    border-style: solid;
+    opacity: 0.35;
+    transition: opacity 0.3s ease;
+  }
+
+  .corner-tl {
+    top: 8px;
+    left: 8px;
+    border-width: 1px 0 0 1px;
+  }
+
+  .corner-br {
+    bottom: 8px;
+    right: 8px;
+    border-width: 0 1px 1px 0;
+  }
+
+  .project-card:hover .corner-tl,
+  .project-card:hover .corner-br {
+    opacity: 0.7;
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .project-status {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--card-accent, var(--col-neon-green));
+    border: 1px solid currentColor;
+    padding: 2px 10px;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  .project-index {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    color: var(--col-border);
+    font-weight: 700;
+  }
+
+  .project-title {
+    font-size: 1.15rem;
+    margin-bottom: 12px;
+    letter-spacing: 0.1em;
+    color: var(--col-heading);
+  }
+
+  .project-desc {
+    font-size: 0.95rem;
+    color: var(--col-text);
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .p-tag {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border: 1px solid var(--col-border);
+  }
+
+  @media (max-width: 768px) {
+    .projects-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .project-card {
+      padding: 24px;
+    }
+  }
+</style>

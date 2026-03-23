@@ -1,0 +1,162 @@
+---
+const links = [
+  { label: "GitHub", href: "https://github.com/samueldyer" },
+  { label: "LinkedIn", href: "https://linkedin.com/in/samueldyer" },
+  { label: "Email", href: "mailto:hello@samueldyer.dev" },
+];
+---
+
+<section id="contact">
+  <hr class="neon-divider" />
+  <div class="section footer-section">
+    <p class="section-label">Open Channel</p>
+    <h2 class="section-title">
+      Let's <span class="accent-cyan">Connect</span>
+    </h2>
+
+    <p class="footer-text">
+      I'm always interested in conversations about spatial computing, creative
+      technology, or ambitious projects that push the boundary of what's
+      possible. Drop a signal.
+    </p>
+
+    <div class="footer-links">
+      {links.map((link) => (
+        <a
+          href={link.href}
+          class="footer-link"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="link-arrow">→</span>
+          {link.label}
+        </a>
+      ))}
+    </div>
+
+    <!-- Bottom decoration -->
+    <div class="footer-bottom">
+      <div class="footer-line" aria-hidden="true"></div>
+      <div class="footer-meta">
+        <span class="meta-item">© 2026 Samuel Dyer</span>
+        <span class="meta-sep">//</span>
+        <span class="meta-item">Built with Astro</span>
+        <span class="meta-sep">//</span>
+        <span class="meta-item">All systems nominal</span>
+      </div>
+      <div class="footer-ascii" aria-hidden="true">
+        <pre>{`
+  ╔══════════════════════════════════╗
+  ║  END TRANSMISSION                ║
+  ║  SIGNAL INTEGRITY: 100%          ║
+  ║  THANK YOU FOR VISITING          ║
+  ╚══════════════════════════════════╝`}</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .accent-cyan {
+    color: var(--col-neon-cyan);
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.25);
+  }
+
+  .footer-section {
+    padding-bottom: 60px;
+  }
+
+  .footer-text {
+    max-width: 560px;
+    font-size: 1.05rem;
+    margin-bottom: 36px;
+  }
+
+  /* ── Links ── */
+  .footer-links {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    margin-bottom: 80px;
+  }
+
+  .footer-link {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--col-text);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: 1px solid var(--col-border);
+    transition: all 0.3s ease;
+  }
+
+  .footer-link:hover {
+    border-color: var(--col-neon-cyan);
+    color: var(--col-neon-cyan);
+    box-shadow: 0 0 16px rgba(0, 212, 255, 0.1);
+  }
+
+  .link-arrow {
+    transition: transform 0.3s ease;
+  }
+
+  .footer-link:hover .link-arrow {
+    transform: translateX(4px);
+  }
+
+  /* ── Bottom ── */
+  .footer-bottom {
+    margin-top: 40px;
+  }
+
+  .footer-line {
+    height: 1px;
+    background: var(--col-border);
+    margin-bottom: 24px;
+  }
+
+  .footer-meta {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+
+  .meta-sep {
+    color: var(--col-border);
+  }
+
+  .footer-ascii {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--col-border);
+    line-height: 1.4;
+    opacity: 0.5;
+  }
+
+  .footer-ascii pre {
+    margin: 0;
+    font-family: inherit;
+  }
+
+  @media (max-width: 768px) {
+    .footer-links {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .footer-link {
+      justify-content: center;
+    }
+  }
+</style>

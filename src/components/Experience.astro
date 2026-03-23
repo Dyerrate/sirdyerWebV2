@@ -1,0 +1,250 @@
+---
+const jobs = [
+  {
+    company: "JPMorgan Chase",
+    role: "Software Engineer II",
+    location: "Plano, TX",
+    period: "May 2022 — Present",
+    highlights: [
+      "Developed an enterprise-scaled UI and backend integrations mirroring mobile-app architectural patterns (modular components, async workflows, analytics pipelines) used by iOS teams, supporting 40,000+ daily users.",
+      "Built REST, SQL, and internal API integrations optimized for high-volume data processing, achieving a 32% improvement in load performance for bulk operations.",
+      "Presented sessions at company-wide developer conference to stakeholders, highlighting future feature process/workflow changes for end users.",
+      "Integrated Adobe Analytics tracking within custom UI components to curate informative user-journey dashboards.",
+      "Utilizing AI Agents (Co-Pilot, Claude) to develop a scalable custom UX component package across any React project with a single formatted JSON file — including props, animations, and typography guides from any UX design documentation.",
+      "Led a finalist pitch-off team for an AR/VR home-buying platform with integrated virtual walkthrough tours, using AWS ECS, NeRFStudio, and React to display 3D gaussian-splat representations of house listings.",
+      "Managed multiple AGILE/SCRUM ceremonies, driving collaborative initiative and peer programming sessions.",
+      "Mentored junior engineers on engineering best practices, mobile-inspired UI patterns, and scalable architecture.",
+    ],
+    extra: "Feb — Jun 2022 · Served as Plano City Culture Lead, driving company-wide culture initiatives and supporting employees' transition from remote to in-office work.",
+    tags: ["React", "REST APIs", "SQL", "Adobe Analytics", "AR/VR", "AWS", "AI Agents", "AGILE"],
+  },
+  {
+    company: "Apple",
+    role: "Power Performance Engineer",
+    location: "Cupertino, CA",
+    period: "Prior",
+    highlights: [
+      "Developed custom automated scripts to mimic a variety of user interactions, analyzing system performance for iOS 16.",
+      "Implemented an automated QA process for detecting spike-defect occurrences at ~98% accuracy.",
+      "Created custom Splunk dashboards to visualize batch testing cases presented during AGILE meetings.",
+      "Curated solutions to identify issues within local iOS and third-party applications (Facebook, X, Instagram), collaborating with production support teams to deliver codebase fixes.",
+    ],
+    extra: null,
+    tags: ["iOS", "Automation", "Splunk", "QA", "Performance Testing", "Python"],
+  },
+];
+---
+
+<section id="experience">
+  <hr class="neon-divider" />
+  <div class="section">
+    <p class="section-label">Dossier</p>
+    <h2 class="section-title">
+      Engineering <span class="accent-dim">Background</span>
+    </h2>
+
+    <p class="exp-intro">
+      My professional foundation was forged at two of the world's most demanding
+      engineering organizations. These roles sharpened my instincts around
+      performance, architecture, and shipping products at planetary scale — but
+      they also fueled the creative hunger that now drives my work in immersive
+      technology.
+    </p>
+
+    <div class="timeline">
+      {jobs.map((job, i) => (
+        <article class="timeline-item">
+          <div class="timeline-marker" aria-hidden="true">
+            <span class="marker-dot" />
+            {i < jobs.length - 1 && <span class="marker-line" />}
+          </div>
+          <div class="timeline-card">
+            <div class="card-header">
+              <div>
+                <h3 class="card-company">{job.company}</h3>
+                <p class="card-role">{job.role}<span class="card-location"> · {job.location}</span></p>
+              </div>
+              <span class="card-period">{job.period}</span>
+            </div>
+
+            <ul class="card-highlights">
+              {job.highlights.map((h) => (
+                <li>{h}</li>
+              ))}
+            </ul>
+
+            {job.extra && (
+              <p class="card-extra">{job.extra}</p>
+            )}
+
+            <div class="card-tags">
+              {job.tags.map((t) => (
+                <span class="card-tag">{t}</span>
+              ))}
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .accent-dim {
+    color: var(--col-text-dim);
+  }
+
+  .exp-intro {
+    max-width: 720px;
+    margin-bottom: 48px;
+    font-size: 1.05rem;
+    color: var(--col-text);
+  }
+
+  /* ── Timeline ── */
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .timeline-item {
+    display: flex;
+    gap: 28px;
+  }
+
+  .timeline-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 20px;
+    padding-top: 6px;
+  }
+
+  .marker-dot {
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--col-neon-green);
+    border-radius: 50%;
+    background: var(--col-bg);
+    flex-shrink: 0;
+    box-shadow: 0 0 8px var(--col-glow-green);
+  }
+
+  .marker-line {
+    width: 1px;
+    flex: 1;
+    background: var(--col-border);
+    margin-top: 4px;
+  }
+
+  /* ── Card ── */
+  .timeline-card {
+    border: 1px solid var(--col-border);
+    background: var(--col-surface);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    flex: 1;
+    position: relative;
+    transition: border-color 0.3s ease;
+  }
+
+  .timeline-card:hover {
+    border-color: rgba(0, 255, 65, 0.25);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+  }
+
+  .card-company {
+    font-size: 1.2rem;
+    letter-spacing: 0.12em;
+  }
+
+  .card-period {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .card-role {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--col-neon-cyan);
+    letter-spacing: 0.1em;
+    margin-bottom: 0;
+  }
+
+  .card-location {
+    color: var(--col-text-dim);
+  }
+
+  .card-highlights {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0;
+  }
+
+  .card-highlights li {
+    position: relative;
+    padding-left: 18px;
+    font-size: 0.92rem;
+    color: var(--col-text);
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+
+  .card-highlights li::before {
+    content: "▹";
+    position: absolute;
+    left: 0;
+    color: var(--col-neon-green);
+  }
+
+  .card-extra {
+    font-size: 0.82rem;
+    color: var(--col-text-dim);
+    border-left: 2px solid var(--col-border);
+    padding-left: 14px;
+    margin-bottom: 18px;
+    font-style: italic;
+    line-height: 1.6;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .card-tag {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--col-text-dim);
+    border: 1px solid var(--col-border);
+    padding: 3px 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 768px) {
+    .timeline-marker {
+      display: none;
+    }
+
+    .timeline-card {
+      padding: 20px;
+    }
+
+    .card-header {
+      flex-direction: column;
+      gap: 4px;
+    }
+  }
+</style>

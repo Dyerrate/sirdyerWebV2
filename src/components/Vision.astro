@@ -1,0 +1,192 @@
+---
+---
+
+<section id="vision">
+  <hr class="neon-divider" />
+  <div class="section">
+    <p class="section-label">Creative Vision</p>
+    <h2 class="section-title">The Future Is<br /><span class="accent-green">Spatial</span></h2>
+
+    <div class="vision-grid">
+      <div class="vision-text">
+        <p>
+          I see technology not as an end in itself, but as a medium — the same way
+          paint is a medium for a muralist or celluloid for a filmmaker.  The most
+          exciting canvas of our generation is <strong>mixed reality</strong>: the
+          space where digital information is woven directly into the physical world
+          we inhabit.
+        </p>
+        <p>
+          My work sits at the convergence of <em>engineering rigor</em> and
+          <em>creative exploration</em>.  I build systems that power immersive
+          experiences — from real-time spatial anchors to GPU-accelerated shader
+          pipelines — but the question that drives me is always the same:
+        </p>
+        <blockquote class="vision-quote">
+          "How do we make a person <span class="accent-cyan">feel</span> something
+          they've never felt before?"
+        </blockquote>
+        <p>
+          Whether it's an AR layer that transforms a city sidewalk into an
+          interactive narrative or a VR environment that teaches empathy through
+          embodiment, I believe the next decade of computing will be defined not
+          by screens, but by <strong>presence</strong>.
+        </p>
+      </div>
+
+      <aside class="vision-stats">
+        <div class="stat-card">
+          <span class="stat-number">6+</span>
+          <span class="stat-desc">Years engineering at scale</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">AR/VR</span>
+          <span class="stat-desc">Primary creative focus</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">∞</span>
+          <span class="stat-desc">Curiosity buffer (never overflows)</span>
+        </div>
+
+        <div class="tech-readout">
+          <p class="readout-header">// ACTIVE INTERESTS</p>
+          <ul>
+            <li>Spatial Computing</li>
+            <li>WebXR / Three.js</li>
+            <li>Shader Programming</li>
+            <li>Generative Art</li>
+            <li>Computer Vision</li>
+            <li>Haptic Interfaces</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<style>
+  .vision-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 60px;
+    align-items: start;
+  }
+
+  .vision-text p {
+    margin-bottom: 20px;
+    font-size: 1.05rem;
+  }
+
+  .vision-text strong {
+    color: var(--col-heading);
+    font-weight: 600;
+  }
+
+  .vision-text em {
+    color: var(--col-neon-cyan);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .accent-green {
+    color: var(--col-neon-green);
+    text-shadow: 0 0 20px rgba(0, 255, 65, 0.25);
+  }
+
+  .accent-cyan {
+    color: var(--col-neon-cyan);
+    text-shadow: 0 0 12px rgba(0, 212, 255, 0.25);
+  }
+
+  /* ── Blockquote ── */
+  .vision-quote {
+    font-family: var(--font-display);
+    font-size: clamp(1rem, 2.2vw, 1.25rem);
+    color: var(--col-heading);
+    border-left: 3px solid var(--col-neon-green);
+    padding: 16px 24px;
+    margin: 32px 0;
+    background: rgba(0, 255, 65, 0.03);
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+  }
+
+  /* ── Stats sidebar ── */
+  .vision-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .stat-card {
+    border: 1px solid var(--col-border);
+    background: var(--col-surface);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-number {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--col-neon-green);
+    text-shadow: 0 0 10px var(--col-glow-green);
+  }
+
+  .stat-desc {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* ── Tech readout ── */
+  .tech-readout {
+    border: 1px solid var(--col-border);
+    background: var(--col-surface);
+    padding: 20px;
+  }
+
+  .readout-header {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--col-neon-green);
+    letter-spacing: 0.2em;
+    margin-bottom: 12px;
+  }
+
+  .tech-readout ul {
+    list-style: none;
+  }
+
+  .tech-readout li {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--col-text);
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(42, 42, 53, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tech-readout li::before {
+    content: "▹";
+    color: var(--col-neon-cyan);
+    font-size: 0.65rem;
+  }
+
+  .tech-readout li:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 768px) {
+    .vision-grid {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+  }
+</style>

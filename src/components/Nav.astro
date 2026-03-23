@@ -1,0 +1,152 @@
+---
+const navLinks = [
+  { label: "Vision", href: "#vision" },
+  { label: "Work", href: "#experience" },
+  { label: "Projects", href: "#projects" },
+  { label: "Contact", href: "#contact" },
+];
+---
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <span class="logo-bracket">[</span>SD<span class="logo-bracket">]</span>
+    </a>
+    <ul class="nav-links">
+      {navLinks.map((link) => (
+        <li>
+          <a href={link.href}>{link.label}</a>
+        </li>
+      ))}
+    </ul>
+    <div class="nav-status">
+      <span class="status-dot"></span>
+      <span class="status-text">SYS:ONLINE</span>
+    </div>
+  </div>
+</nav>
+
+<style>
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(10, 10, 12, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--col-border);
+  }
+
+  .nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--col-heading);
+    letter-spacing: 0.15em;
+  }
+
+  .nav-logo:hover {
+    color: var(--col-heading);
+  }
+
+  .logo-bracket {
+    color: var(--col-neon-green);
+    font-weight: 400;
+  }
+
+  .nav-links {
+    list-style: none;
+    display: flex;
+    gap: 32px;
+  }
+
+  .nav-links a {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--col-text-dim);
+    position: relative;
+  }
+
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--col-neon-green);
+    transition: width 0.3s ease;
+  }
+
+  .nav-links a:hover {
+    color: var(--col-neon-green);
+    text-shadow: 0 0 8px var(--col-glow-green);
+  }
+
+  .nav-links a:hover::after {
+    width: 100%;
+  }
+
+  .nav-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--col-neon-green);
+    letter-spacing: 0.15em;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--col-neon-green);
+    box-shadow: 0 0 6px var(--col-neon-green);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .nav-links {
+      gap: 18px;
+    }
+
+    .nav-links a {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+    }
+
+    .nav-status {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .nav-links {
+      gap: 12px;
+    }
+  }
+</style>
