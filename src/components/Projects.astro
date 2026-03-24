@@ -1,44 +1,4 @@
 ---
-const projects = [
-  {
-    title: "Spatial Canvas",
-    description:
-      "A WebXR experiment that turns any room into a collaborative 3D drawing space. Users sketch mid-air with hand tracking while spatial anchors persist their art in the real world.",
-    tags: ["WebXR", "Three.js", "Hand Tracking"],
-    status: "PROTOTYPE",
-    accent: "green",
-  },
-  {
-    title: "Ghost Layer",
-    description:
-      "An AR concept that overlays historical photographs onto their real-world locations, fading between past and present as you move through a city block. Memory made tangible.",
-    tags: ["ARKit", "Computer Vision", "Storytelling"],
-    status: "CONCEPT",
-    accent: "cyan",
-  },
-  {
-    title: "Pulse Terrain",
-    description:
-      "A generative VR landscape driven by biometric data — heart rate sculpts mountains, breathing controls weather. The environment becomes a living mirror of your body.",
-    tags: ["Unity", "Shader Graph", "Biometrics"],
-    status: "IN DEV",
-    accent: "amber",
-  },
-  {
-    title: "Signal // Noise",
-    description:
-      "An interactive installation where participants wear VR headsets and collaboratively reconstruct a fragmented digital world by communicating only through spatial audio cues.",
-    tags: ["Spatial Audio", "Multiplayer", "Installation"],
-    status: "EXHIBITED",
-    accent: "green",
-  },
-];
-
-const accentMap: Record<string, string> = {
-  green: "var(--col-neon-green)",
-  cyan: "var(--col-neon-cyan)",
-  amber: "var(--col-neon-amber)",
-};
 ---
 
 <section id="projects">
@@ -50,36 +10,270 @@ const accentMap: Record<string, string> = {
     </h2>
 
     <p class="proj-intro">
-      Beyond the day job, these are the ideas I chase at night — prototypes,
-      concepts, and provocations at the edge of immersive technology. Some are
-      shipped, some are sketches. All of them ask: <em>what if?</em>
+      Beyond the day job, these are the ideas I chase — studios, prototypes,
+      and provocations at the edge of immersive technology.
+      Navigate the file system below to explore.
     </p>
 
-    <div class="projects-grid">
-      {projects.map((p) => (
-        <article
-          class={`project-card accent-${p.accent}`}
-          style={`--card-accent: ${accentMap[p.accent]}`}
-        >
-          <div class="card-top">
-            <span class="project-status">{p.status}</span>
-            <span class="project-index">{`0${projects.indexOf(p) + 1}`}</span>
+    <!-- Retro terminal file browser -->
+    <div class="terminal-window">
+      <!-- Title bar -->
+      <div class="terminal-titlebar">
+        <div class="titlebar-dots">
+          <span class="dot dot--red"></span>
+          <span class="dot dot--yellow"></span>
+          <span class="dot dot--green"></span>
+        </div>
+        <span class="titlebar-text" id="terminalTitle">sdyer@creative-lab:~/projects</span>
+        <span class="titlebar-spacer"></span>
+      </div>
+
+      <!-- Terminal body -->
+      <div class="terminal-body">
+        <!-- Breadcrumb path -->
+        <div class="terminal-path" id="terminalPath">
+          <span class="path-segment path-root" data-nav="root">~/projects</span>
+        </div>
+
+        <!-- Root directory listing -->
+        <div class="fs-view" id="viewRoot">
+          <div class="terminal-output">
+            <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects</span>$ ls -la</p>
+            <p class="cmd-output">total 2 directories</p>
+            <p class="cmd-output dim">drwxr-xr-x  4 sdyer  staff  128 Mar 24 09:41 .</p>
+            <p class="cmd-output dim">drwxr-xr-x  8 sdyer  staff  256 Mar 24 09:41 ..</p>
           </div>
-          <h3 class="project-title">{p.title}</h3>
-          <p class="project-desc">{p.description}</p>
-          <div class="project-tags">
-            {p.tags.map((t) => (
-              <span class="p-tag">{t}</span>
-            ))}
+
+          <div class="fs-listing">
+            <button class="fs-item fs-folder" data-target="subSpatial">
+              <span class="fs-icon">📁</span>
+              <span class="fs-name">Sub_Spatial_Studio/</span>
+              <span class="fs-meta">drwxr-xr-x · 2.4GB · ACTIVE</span>
+              <span class="fs-arrow">→</span>
+            </button>
+            <button class="fs-item fs-folder" data-target="autoCar">
+              <span class="fs-icon">📁</span>
+              <span class="fs-name">AutoCar_VR/</span>
+              <span class="fs-meta">drwxr-xr-x · 1.8GB · IN_DEV</span>
+              <span class="fs-arrow">→</span>
+            </button>
           </div>
-          <!-- Decorative corner -->
-          <div class="corner-tl" aria-hidden="true" />
-          <div class="corner-br" aria-hidden="true" />
-        </article>
-      ))}
+
+          <div class="terminal-output">
+            <p class="cmd-hint">Click a directory to explore ▸</p>
+          </div>
+        </div>
+
+        <!-- Sub Spatial Studio view -->
+        <div class="fs-view hidden" id="viewSubSpatial">
+          <div class="terminal-output">
+            <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects/Sub_Spatial_Studio</span>$ cat README.md</p>
+          </div>
+
+          <div class="project-detail">
+            <div class="detail-header">
+              <div class="detail-title-row">
+                <h3 class="detail-title">SUB SPATIAL STUDIO</h3>
+                <span class="detail-status status--active">● ACTIVE</span>
+              </div>
+              <p class="detail-subtitle">Spatial Design Studio — visionOS / Apple Vision Pro</p>
+            </div>
+
+            <div class="detail-body">
+              <div class="detail-section">
+                <p class="detail-label">// OVERVIEW</p>
+                <p class="detail-text">
+                  An independent studio dedicated to designing and developing immersive applications for Apple Vision Pro. Sub Spatial Studio explores the frontier of spatial computing — crafting experiences that blend digital interfaces seamlessly into physical space.
+                </p>
+              </div>
+
+              <div class="detail-section">
+                <p class="detail-label">// FOCUS AREAS</p>
+                <div class="detail-list">
+                  <span class="detail-list-item">▹ visionOS Application Design</span>
+                  <span class="detail-list-item">▹ Spatial UI/UX Prototyping</span>
+                  <span class="detail-list-item">▹ RealityKit & SwiftUI Integration</span>
+                  <span class="detail-list-item">▹ Immersive 3D Environments</span>
+                </div>
+              </div>
+
+              <div class="detail-section">
+                <p class="detail-label">// TECH STACK</p>
+                <div class="detail-tags">
+                  <span class="d-tag">visionOS</span>
+                  <span class="d-tag">SwiftUI</span>
+                  <span class="d-tag">RealityKit</span>
+                  <span class="d-tag">Reality Composer Pro</span>
+                  <span class="d-tag">ARKit</span>
+                  <span class="d-tag">Spatial Computing</span>
+                </div>
+              </div>
+
+              <div class="detail-actions">
+                <a href="https://subspatial.studio" target="_blank" rel="noopener" class="detail-link detail-link--primary">
+                  <span class="link-icon">◈</span> Visit Studio Website <span class="external-icon">↗</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- File tree decoration -->
+            <div class="detail-files">
+              <p class="files-header">$ tree -L 1</p>
+              <p class="file-entry">├── src/</p>
+              <p class="file-entry">├── assets/</p>
+              <p class="file-entry">├── prototypes/</p>
+              <p class="file-entry">├── README.md</p>
+              <p class="file-entry">└── package.json</p>
+              <p class="file-count">3 directories, 2 files</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- AutoCar VR view -->
+        <div class="fs-view hidden" id="viewAutoCar">
+          <div class="terminal-output">
+            <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects/AutoCar_VR</span>$ cat README.md</p>
+          </div>
+
+          <div class="project-detail">
+            <div class="detail-header">
+              <div class="detail-title-row">
+                <h3 class="detail-title">AUTOCAR</h3>
+                <span class="detail-status status--dev">◌ IN DEVELOPMENT</span>
+              </div>
+              <p class="detail-subtitle">Virtual Reality — DIY Car Repair System</p>
+            </div>
+
+            <div class="detail-body">
+              <div class="detail-section">
+                <p class="detail-label">// OVERVIEW</p>
+                <p class="detail-text">
+                  A VR application that places users inside a fully interactive virtual garage where they can learn hands-on car repair techniques. Step-by-step guided workflows walk users through real maintenance procedures — from brake pad replacements to engine diagnostics — using spatial hand tracking and 3D-annotated vehicle models.
+                </p>
+              </div>
+
+              <div class="detail-section">
+                <p class="detail-label">// KEY FEATURES</p>
+                <div class="detail-list">
+                  <span class="detail-list-item">▹ Interactive 3D vehicle models with exploded views</span>
+                  <span class="detail-list-item">▹ Step-by-step guided repair workflows</span>
+                  <span class="detail-list-item">▹ Hand-tracking tool interactions</span>
+                  <span class="detail-list-item">▹ Real-time diagnostic overlay system</span>
+                  <span class="detail-list-item">▹ Progress tracking & skill assessment</span>
+                </div>
+              </div>
+
+              <div class="detail-section">
+                <p class="detail-label">// TECH STACK</p>
+                <div class="detail-tags">
+                  <span class="d-tag">Unity</span>
+                  <span class="d-tag">XR Interaction Toolkit</span>
+                  <span class="d-tag">Blender</span>
+                  <span class="d-tag">Hand Tracking</span>
+                  <span class="d-tag">C#</span>
+                  <span class="d-tag">Meta Quest</span>
+                </div>
+              </div>
+
+              <div class="detail-actions">
+                <span class="detail-link detail-link--disabled">
+                  <span class="link-icon">◈</span> Coming Soon — In Development
+                </span>
+              </div>
+            </div>
+
+            <!-- File tree decoration -->
+            <div class="detail-files">
+              <p class="files-header">$ tree -L 1</p>
+              <p class="file-entry">├── Assets/</p>
+              <p class="file-entry">├── Scripts/</p>
+              <p class="file-entry">├── Models/</p>
+              <p class="file-entry">├── README.md</p>
+              <p class="file-entry">└── ProjectSettings/</p>
+              <p class="file-count">3 directories, 2 files</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Back button (shown inside project views) -->
+        <button class="back-btn hidden" id="backBtn">
+          <span class="back-arrow">←</span> cd ..
+        </button>
+      </div>
     </div>
   </div>
 </section>
+
+<!-- File system navigation script -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const viewRoot = document.getElementById("viewRoot") as HTMLElement;
+    const viewSubSpatial = document.getElementById("viewSubSpatial") as HTMLElement;
+    const viewAutoCar = document.getElementById("viewAutoCar") as HTMLElement;
+    const backBtn = document.getElementById("backBtn") as HTMLElement;
+    const terminalTitle = document.getElementById("terminalTitle") as HTMLElement;
+    const terminalPath = document.getElementById("terminalPath") as HTMLElement;
+
+    const views: Record<string, HTMLElement> = {
+      root: viewRoot,
+      subSpatial: viewSubSpatial,
+      autoCar: viewAutoCar,
+    };
+
+    const titles: Record<string, string> = {
+      root: "sdyer@creative-lab:~/projects",
+      subSpatial: "sdyer@creative-lab:~/projects/Sub_Spatial_Studio",
+      autoCar: "sdyer@creative-lab:~/projects/AutoCar_VR",
+    };
+
+    const pathLabels: Record<string, string> = {
+      subSpatial: "Sub_Spatial_Studio",
+      autoCar: "AutoCar_VR",
+    };
+
+    function showView(key: string) {
+      // Hide all views
+      Object.values(views).forEach((v) => v.classList.add("hidden"));
+
+      // Show target
+      views[key].classList.remove("hidden");
+      views[key].style.animation = "fadeSlideIn 0.35s ease forwards";
+
+      // Update titlebar
+      terminalTitle.textContent = titles[key];
+
+      // Update breadcrumb
+      if (key === "root") {
+        terminalPath.innerHTML = `<span class="path-segment path-root" data-nav="root">~/projects</span>`;
+        backBtn.classList.add("hidden");
+      } else {
+        terminalPath.innerHTML = `
+          <span class="path-segment path-root" data-nav="root">~/projects</span>
+          <span class="path-sep">/</span>
+          <span class="path-segment path-current">${pathLabels[key]}</span>
+        `;
+        backBtn.classList.remove("hidden");
+      }
+
+      // Re-attach root click
+      const rootEl = terminalPath.querySelector('[data-nav="root"]');
+      if (rootEl) {
+        rootEl.addEventListener("click", () => showView("root"));
+      }
+    }
+
+    // Folder click handlers
+    document.querySelectorAll(".fs-folder").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const target = (btn as HTMLElement).dataset.target;
+        if (target) showView(target);
+      });
+    });
+
+    // Back button
+    backBtn.addEventListener("click", () => showView("root"));
+  });
+</script>
 
 <style>
   .accent-green {
@@ -93,125 +287,465 @@ const accentMap: Record<string, string> = {
     font-size: 1.05rem;
   }
 
-  .proj-intro em {
-    color: var(--col-neon-cyan);
-    font-style: normal;
-    font-weight: 500;
-  }
-
-  /* ── Grid ── */
-  .projects-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
-
-  /* ── Card ── */
-  .project-card {
+  /* ── Terminal Window ── */
+  .terminal-window {
     border: 1px solid var(--col-border);
-    background: var(--col-surface);
-    padding: 32px;
-    position: relative;
+    background: #0c0c10;
     overflow: hidden;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    max-width: 900px;
   }
 
-  .project-card:hover {
-    border-color: var(--card-accent, var(--col-neon-green));
-    box-shadow: 0 0 30px rgba(0, 255, 65, 0.06);
-  }
-
-  /* Decorative corners */
-  .corner-tl,
-  .corner-br {
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    border-color: var(--card-accent, var(--col-neon-green));
-    border-style: solid;
-    opacity: 0.35;
-    transition: opacity 0.3s ease;
-  }
-
-  .corner-tl {
-    top: 8px;
-    left: 8px;
-    border-width: 1px 0 0 1px;
-  }
-
-  .corner-br {
-    bottom: 8px;
-    right: 8px;
-    border-width: 0 1px 1px 0;
-  }
-
-  .project-card:hover .corner-tl,
-  .project-card:hover .corner-br {
-    opacity: 0.7;
-  }
-
-  .card-top {
+  /* Title bar */
+  .terminal-titlebar {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #18181f;
+    border-bottom: 1px solid var(--col-border);
   }
 
-  .project-status {
+  .titlebar-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .dot--red { background: #ff5f57; }
+  .dot--yellow { background: #ffbd2e; }
+  .dot--green { background: #28c840; }
+
+  .titlebar-text {
     font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.2em;
-    color: var(--card-accent, var(--col-neon-green));
-    border: 1px solid currentColor;
-    padding: 2px 10px;
-    text-transform: uppercase;
-    opacity: 0.8;
-  }
-
-  .project-index {
-    font-family: var(--font-display);
-    font-size: 0.9rem;
-    color: var(--col-border);
-    font-weight: 700;
-  }
-
-  .project-title {
-    font-size: 1.15rem;
-    margin-bottom: 12px;
+    font-size: 0.68rem;
+    color: var(--col-text-dim);
     letter-spacing: 0.1em;
+    flex: 1;
+    text-align: center;
+  }
+
+  .titlebar-spacer {
+    width: 44px;
+  }
+
+  /* Terminal body */
+  .terminal-body {
+    padding: 24px;
+    min-height: 400px;
+    position: relative;
+  }
+
+  /* Breadcrumb path */
+  .terminal-path {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(42,42,53,0.5);
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .path-segment {
+    color: var(--col-neon-cyan);
+  }
+
+  .path-root {
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .path-root:hover {
+    color: var(--col-neon-green);
+    text-shadow: 0 0 8px rgba(0,255,65,0.3);
+  }
+
+  .path-sep {
+    color: var(--col-text-dim);
+    margin: 0 2px;
+  }
+
+  .path-current {
     color: var(--col-heading);
   }
 
-  .project-desc {
-    font-size: 0.95rem;
-    color: var(--col-text);
-    line-height: 1.7;
-    margin-bottom: 20px;
+  /* Terminal output text */
+  .terminal-output {
+    margin-bottom: 16px;
   }
 
-  .project-tags {
+  .cmd-line {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--col-text);
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+
+  .prompt-green { color: var(--col-neon-green); }
+  .prompt-cyan { color: var(--col-neon-cyan); }
+
+  .cmd-output {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--col-text);
+    letter-spacing: 0.08em;
+    line-height: 1.8;
+  }
+
+  .cmd-output.dim {
+    color: var(--col-text-dim);
+    opacity: 0.5;
+  }
+
+  .cmd-hint {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.15em;
+    margin-top: 8px;
+    animation: pulse-hint 2s ease infinite;
+  }
+
+  @keyframes pulse-hint {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* ── File system listing ── */
+  .fs-listing {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 12px;
+  }
+
+  .fs-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(17,17,22,0.6);
+    border: 1px solid var(--col-border);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+    color: inherit;
+  }
+
+  .fs-item:hover {
+    background: rgba(0,255,65,0.04);
+    border-color: rgba(0,255,65,0.25);
+    transform: translateX(4px);
+  }
+
+  .fs-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .fs-name {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--col-neon-cyan);
+    letter-spacing: 0.08em;
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .fs-item:hover .fs-name {
+    color: var(--col-neon-green);
+    text-shadow: 0 0 8px rgba(0,255,65,0.3);
+  }
+
+  .fs-meta {
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.12em;
+  }
+
+  .fs-arrow {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--col-text-dim);
+    transition: transform 0.2s, color 0.2s;
+  }
+
+  .fs-item:hover .fs-arrow {
+    transform: translateX(4px);
+    color: var(--col-neon-green);
+  }
+
+  /* ── Project detail view ── */
+  .project-detail {
+    border: 1px solid var(--col-border);
+    background: var(--col-surface);
+    overflow: hidden;
+  }
+
+  .detail-header {
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--col-border);
+    background: rgba(0,255,65,0.02);
+  }
+
+  .detail-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .detail-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--col-heading);
+    letter-spacing: 0.12em;
+  }
+
+  .detail-status {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    padding: 4px 12px;
+    border: 1px solid currentColor;
+    text-transform: uppercase;
+  }
+
+  .status--active { color: var(--col-neon-green); }
+  .status--dev { color: var(--col-neon-amber); }
+
+  .detail-subtitle {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.1em;
+  }
+
+  .detail-body {
+    padding: 28px;
+  }
+
+  .detail-section {
+    margin-bottom: 24px;
+  }
+
+  .detail-label {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--col-neon-green);
+    letter-spacing: 0.2em;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  .detail-text {
+    font-size: 0.95rem;
+    color: var(--col-text);
+    line-height: 1.75;
+  }
+
+  .detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .detail-list-item {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--col-text);
+    letter-spacing: 0.06em;
+    padding: 4px 0;
+  }
+
+  .detail-list-item::first-letter {
+    color: var(--col-neon-cyan);
+  }
+
+  .detail-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
 
-  .p-tag {
+  .d-tag {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--col-neon-cyan);
+    border: 1px solid rgba(0,212,255,0.2);
+    padding: 4px 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: rgba(0,212,255,0.04);
+  }
+
+  .detail-actions {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--col-border);
+  }
+
+  .detail-link {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    transition: all 0.3s ease;
+  }
+
+  .detail-link--primary {
+    border: 1px solid var(--col-neon-green);
+    color: var(--col-neon-green);
+    background: rgba(0,255,65,0.05);
+  }
+
+  .detail-link--primary:hover {
+    background: rgba(0,255,65,0.12);
+    box-shadow: 0 0 20px rgba(0,255,65,0.15);
+    color: var(--col-neon-green);
+  }
+
+  .detail-link--disabled {
+    border: 1px solid var(--col-border);
+    color: var(--col-text-dim);
+    background: rgba(42,42,53,0.3);
+    cursor: default;
+  }
+
+  .external-icon {
+    font-size: 0.85rem;
+  }
+
+  .link-icon {
+    font-size: 0.9rem;
+  }
+
+  /* File tree decoration */
+  .detail-files {
+    padding: 20px 28px;
+    border-top: 1px solid var(--col-border);
+    background: rgba(10,10,12,0.5);
+  }
+
+  .files-header {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+  }
+
+  .file-entry {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--col-text-dim);
+    line-height: 1.8;
+    opacity: 0.6;
+  }
+
+  .file-count {
     font-family: var(--font-mono);
     font-size: 0.6rem;
     color: var(--col-text-dim);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    padding: 3px 10px;
-    border: 1px solid var(--col-border);
+    margin-top: 4px;
+    opacity: 0.4;
   }
 
+  /* ── Back button ── */
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    color: var(--col-text-dim);
+    background: rgba(17,17,22,0.6);
+    border: 1px solid var(--col-border);
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+
+  .back-btn:hover {
+    color: var(--col-neon-green);
+    border-color: rgba(0,255,65,0.25);
+    background: rgba(0,255,65,0.04);
+  }
+
+  .back-arrow {
+    font-size: 1rem;
+    transition: transform 0.2s;
+  }
+
+  .back-btn:hover .back-arrow {
+    transform: translateX(-4px);
+  }
+
+  /* ── Visibility & animation ── */
+  .hidden {
+    display: none !important;
+  }
+
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ── Mobile ── */
   @media (max-width: 768px) {
-    .projects-grid {
-      grid-template-columns: 1fr;
+    .terminal-body {
+      padding: 16px;
     }
 
-    .project-card {
-      padding: 24px;
+    .fs-meta {
+      display: none;
+    }
+
+    .detail-header {
+      padding: 16px 20px;
+    }
+
+    .detail-body {
+      padding: 20px;
+    }
+
+    .detail-files {
+      padding: 16px 20px;
+    }
+
+    .detail-title {
+      font-size: 1.15rem;
+    }
+
+    .detail-title-row {
+      flex-direction: column;
+      align-items: flex-start;
     }
   }
 </style>
