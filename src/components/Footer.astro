@@ -1,9 +1,4 @@
 ---
-const links = [
-  { label: "GitHub", href: "https://github.com/samueldyer" },
-  { label: "LinkedIn", href: "https://linkedin.com/in/samueldyer" },
-  { label: "Email", href: "mailto:hello@samueldyer.dev" },
-];
 ---
 
 <section id="contact">
@@ -15,23 +10,65 @@ const links = [
     </h2>
 
     <p class="footer-text">
-      I'm always interested in conversations about spatial computing, creative
-      technology, or ambitious projects that push the boundary of what's
-      possible. Drop a signal.
+      Incoming transmissions welcome. Pick a frequency.
     </p>
 
-    <div class="footer-links">
-      {links.map((link) => (
-        <a
-          href={link.href}
-          class="footer-link"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span class="link-arrow">→</span>
-          {link.label}
+    <!-- Terminal-styled channel selector -->
+    <div class="channel-panel">
+      <div class="panel-header">
+        <span class="panel-dot"></span>
+        <span class="panel-title">OUTBOUND CHANNELS — 3 ACTIVE</span>
+      </div>
+
+      <div class="channel-list">
+        <a href="https://www.linkedin.com/in/samuel-c-dyer/" target="_blank" rel="noopener noreferrer" class="channel channel--linkedin">
+          <div class="channel-left">
+            <span class="channel-indicator indicator--blue"></span>
+            <div class="channel-info">
+              <span class="channel-name">LinkedIn</span>
+              <span class="channel-sub">Professional network · Experience · Resume</span>
+            </div>
+          </div>
+          <div class="channel-right">
+            <span class="channel-status">ONLINE</span>
+            <span class="channel-arrow">↗</span>
+          </div>
         </a>
-      ))}
+
+        <a href="https://github.com/Dyerrate" target="_blank" rel="noopener noreferrer" class="channel channel--github">
+          <div class="channel-left">
+            <span class="channel-indicator indicator--green"></span>
+            <div class="channel-info">
+              <span class="channel-name">GitHub</span>
+              <span class="channel-sub">Source code · Repos · Open-source work</span>
+            </div>
+          </div>
+          <div class="channel-right">
+            <span class="channel-status">ONLINE</span>
+            <span class="channel-arrow">↗</span>
+          </div>
+        </a>
+
+        <a href="mailto:dyerrate@gmail.com" class="channel channel--email">
+          <div class="channel-left">
+            <span class="channel-indicator indicator--cyan"></span>
+            <div class="channel-info">
+              <span class="channel-name">Email</span>
+              <span class="channel-sub">Direct line · Inquiries · Collaboration</span>
+            </div>
+          </div>
+          <div class="channel-right">
+            <span class="channel-status">READY</span>
+            <span class="channel-arrow">→</span>
+          </div>
+        </a>
+      </div>
+
+      <div class="panel-footer">
+        <span>SIGNAL: STRONG</span>
+        <span>LATENCY: &lt;1ms</span>
+        <span>ENCRYPTION: ENABLED</span>
+      </div>
     </div>
 
     <!-- Bottom decoration -->
@@ -67,45 +104,175 @@ const links = [
   }
 
   .footer-text {
-    max-width: 560px;
+    max-width: 600px;
     font-size: 1.05rem;
-    margin-bottom: 36px;
+    margin-bottom: 40px;
   }
 
-  /* ── Links ── */
-  .footer-links {
-    display: flex;
-    gap: 32px;
-    flex-wrap: wrap;
+  /* ── Channel Panel ── */
+  .channel-panel {
+    max-width: 640px;
+    border: 1px solid var(--col-border);
+    background: #0c0c10;
+    overflow: hidden;
     margin-bottom: 80px;
   }
 
-  .footer-link {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--col-text);
-    display: inline-flex;
+  .panel-header {
+    display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border: 1px solid var(--col-border);
-    transition: all 0.3s ease;
+    gap: 10px;
+    padding: 12px 20px;
+    background: #18181f;
+    border-bottom: 1px solid var(--col-border);
   }
 
-  .footer-link:hover {
-    border-color: var(--col-neon-cyan);
+  .panel-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--col-neon-green);
+    box-shadow: 0 0 6px rgba(0,255,65,0.4);
+    animation: pulse-dot 2s ease infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .panel-title {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* ── Channel rows ── */
+  .channel-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .channel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid rgba(42,42,53,0.4);
+    transition: all 0.25s ease;
+    text-decoration: none;
+    gap: 16px;
+  }
+
+  .channel:last-child {
+    border-bottom: none;
+  }
+
+  .channel:hover {
+    background: rgba(0,212,255,0.03);
+    padding-left: 26px;
+  }
+
+  .channel-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+  }
+
+  .channel-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .indicator--blue {
+    background: #0a96dc;
+    box-shadow: 0 0 8px rgba(10,150,220,0.4);
+  }
+
+  .indicator--green {
+    background: var(--col-neon-green);
+    box-shadow: 0 0 8px rgba(0,255,65,0.4);
+  }
+
+  .indicator--cyan {
+    background: var(--col-neon-cyan);
+    box-shadow: 0 0 8px rgba(0,212,255,0.4);
+  }
+
+  .channel-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .channel-name {
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    color: var(--col-heading);
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+
+  .channel-sub {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.1em;
+  }
+
+  .channel-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .channel-status {
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    color: var(--col-neon-green);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .channel-arrow {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    color: var(--col-text-dim);
+    transition: transform 0.2s, color 0.2s;
+  }
+
+  .channel:hover .channel-arrow {
     color: var(--col-neon-cyan);
-    box-shadow: 0 0 16px rgba(0, 212, 255, 0.1);
+    transform: translateX(3px);
   }
 
-  .link-arrow {
-    transition: transform 0.3s ease;
-  }
+  .channel--linkedin:hover .channel-name { color: #0a96dc; }
+  .channel--github:hover .channel-name { color: var(--col-neon-green); }
+  .channel--email:hover .channel-name { color: var(--col-neon-cyan); }
 
-  .footer-link:hover .link-arrow {
-    transform: translateX(4px);
+  .channel--linkedin:hover .channel-status { color: #0a96dc; }
+  .channel--github:hover .channel-status { color: var(--col-neon-green); }
+  .channel--email:hover .channel-status { color: var(--col-neon-cyan); }
+
+  /* ── Panel Footer ── */
+  .panel-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-top: 1px solid var(--col-border);
+    background: #18181f;
+    font-family: var(--font-mono);
+    font-size: 0.52rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.5;
   }
 
   /* ── Bottom ── */
@@ -149,14 +316,22 @@ const links = [
     font-family: inherit;
   }
 
+  /* ── Mobile ── */
   @media (max-width: 768px) {
-    .footer-links {
+    .channel {
       flex-direction: column;
-      gap: 12px;
+      align-items: flex-start;
+      gap: 10px;
     }
 
-    .footer-link {
-      justify-content: center;
+    .channel-right {
+      align-self: flex-end;
+    }
+
+    .panel-footer {
+      flex-direction: column;
+      gap: 4px;
+      text-align: center;
     }
   }
 </style>
