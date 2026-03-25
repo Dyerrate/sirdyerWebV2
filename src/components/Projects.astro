@@ -30,13 +30,24 @@
 
       <!-- Terminal body -->
       <div class="terminal-body">
-        <!-- Breadcrumb path -->
-        <div class="terminal-path" id="terminalPath">
-          <span class="path-segment path-root" data-nav="root">~/projects</span>
+        <!-- Loading state (shown until user scrolls here) -->
+        <div class="terminal-loading" id="terminalLoading">
+          <div class="loading-spinner" aria-hidden="true"></div>
+          <p class="loading-text">AWAITING CONNECTION<span class="loading-dots">...</span></p>
         </div>
 
-        <!-- Root directory listing -->
-        <div class="fs-view" id="viewRoot">
+        <!-- Boot sequence area (typed in by JS) -->
+        <div class="terminal-boot hidden" id="terminalBoot"></div>
+
+        <!-- Main content (hidden until boot completes) -->
+        <div class="terminal-main hidden" id="terminalMain">
+          <!-- Breadcrumb path -->
+          <div class="terminal-path" id="terminalPath">
+            <span class="path-segment path-root" data-nav="root">~/projects</span>
+          </div>
+
+          <!-- Root directory listing -->
+          <div class="fs-view" id="viewRoot">
           <div class="terminal-output">
             <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects</span>$ ls -la</p>
             <p class="cmd-output">total 2 directories</p>
@@ -195,18 +206,27 @@
           </div>
         </div>
 
-        <!-- Back button (shown inside project views) -->
-        <button class="back-btn hidden" id="backBtn">
-          <span class="back-arrow">←</span> cd ..
-        </button>
+          <!-- Back button (shown inside project views) -->
+          <button class="back-btn hidden" id="backBtn">
+            <span class="back-arrow">←</span> cd ..
+          </button>
+        </div><!-- end .terminal-main -->
       </div>
     </div>
   </div>
 </section>
 
-<!-- File system navigation script -->
+<!-- File system navigation + scroll-triggered boot script -->
 <script>
   document.addEventListener("DOMContentLoaded", () => {
+    const CHAR_SPEED = 22;
+    const LINE_PAUSE = 200;
+
+    // Elements
+    const section = document.getElementById("projects") as HTMLElement;
+    const loadingEl = document.getElementById("terminalLoading") as HTMLElement;
+    const bootEl = document.getElementById("terminalBoot") as HTMLElement;
+    const mainEl = document.getElementById("terminalMain") as HTMLElement;
     const viewRoot = document.getElementById("viewRoot") as HTMLElement;
     const viewSubSpatial = document.getElementById("viewSubSpatial") as HTMLElement;
     const viewAutoCar = document.getElementById("viewAutoCar") as HTMLElement;
@@ -214,6 +234,88 @@
     const terminalTitle = document.getElementById("terminalTitle") as HTMLElement;
     const terminalPath = document.getElementById("terminalPath") as HTMLElement;
 
+    let hasBooted = false;
+
+    // ── Typewriter utility ──
+    function typeText(el: HTMLElement, text: string, speed: number): Promise<void> {
+      return new Promise((resolve) => {
+        let i = 0;
+        const cursor = document.createElement("span");
+        cursor.className = "boot-cursor";
+        cursor.textContent = "\u2588";
+        el.appendChild(cursor);
+
+        function tick() {
+          if (i < text.length) {
+            cursor.remove();
+            el.insertAdjacentText("beforeend", text[i]);
+            el.appendChild(cursor);
+            i++;
+            setTimeout(tick, speed);
+          } else {
+            cursor.remove();
+            resolve();
+          }
+        }
+        tick();
+      });
+    }
+
+    function sleep(ms: number): Promise<void> {
+      return new Promise((r) => setTimeout(r, ms));
+    }
+
+    // ── Boot sequence ──
+    async function runBoot() {
+      loadingEl.classList.add("hidden");
+      bootEl.classList.remove("hidden");
+
+      const lines = [
+        { text: "sdyer@creative-lab:~$ cd projects", color: "green" },
+        { text: "sdyer@creative-lab:~/projects$ ls -la", color: "green" },
+        { text: "total 2 directories", color: "dim" },
+        { text: "drwxr-xr-x  4 sdyer  staff  128 Mar 24 09:41 .", color: "dim" },
+        { text: "drwxr-xr-x  8 sdyer  staff  256 Mar 24 09:41 ..", color: "dim" },
+        { text: "drwxr-xr-x  6 sdyer  staff  2.4G  ACTIVE  Sub_Spatial_Studio/", color: "cyan" },
+        { text: "drwxr-xr-x  5 sdyer  staff  1.8G  IN_DEV  AutoCar_VR/", color: "cyan" },
+      ];
+
+      for (const line of lines) {
+        const p = document.createElement("p");
+        p.className = `boot-line boot-line--${line.color}`;
+        bootEl.appendChild(p);
+        await typeText(p, line.text, CHAR_SPEED);
+        await sleep(LINE_PAUSE);
+      }
+
+      await sleep(400);
+
+      // Transition: fade boot out, show main content
+      bootEl.style.transition = "opacity 0.4s ease";
+      bootEl.style.opacity = "0";
+      await sleep(400);
+      bootEl.classList.add("hidden");
+      mainEl.classList.remove("hidden");
+      mainEl.style.animation = "fadeSlideIn 0.4s ease forwards";
+    }
+
+    // ── IntersectionObserver: trigger boot on scroll ──
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasBooted) {
+            hasBooted = true;
+            observer.disconnect();
+            runBoot();
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(section);
+
+    // ── File system navigation ──
     const views: Record<string, HTMLElement> = {
       root: viewRoot,
       subSpatial: viewSubSpatial,
@@ -232,17 +334,11 @@
     };
 
     function showView(key: string) {
-      // Hide all views
       Object.values(views).forEach((v) => v.classList.add("hidden"));
-
-      // Show target
       views[key].classList.remove("hidden");
       views[key].style.animation = "fadeSlideIn 0.35s ease forwards";
-
-      // Update titlebar
       terminalTitle.textContent = titles[key];
 
-      // Update breadcrumb
       if (key === "root") {
         terminalPath.innerHTML = `<span class="path-segment path-root" data-nav="root">~/projects</span>`;
         backBtn.classList.add("hidden");
@@ -255,14 +351,12 @@
         backBtn.classList.remove("hidden");
       }
 
-      // Re-attach root click
       const rootEl = terminalPath.querySelector('[data-nav="root"]');
       if (rootEl) {
         rootEl.addEventListener("click", () => showView("root"));
       }
     }
 
-    // Folder click handlers
     document.querySelectorAll(".fs-folder").forEach((btn) => {
       btn.addEventListener("click", () => {
         const target = (btn as HTMLElement).dataset.target;
@@ -270,7 +364,6 @@
       });
     });
 
-    // Back button
     backBtn.addEventListener("click", () => showView("root"));
   });
 </script>
@@ -669,7 +762,7 @@
     opacity: 0.4;
   }
 
-  /* ── Back button ── */
+  /* ── Back button (always red) ── */
   .back-btn {
     display: inline-flex;
     align-items: center;
@@ -679,17 +772,19 @@
     font-family: var(--font-mono);
     font-size: 0.72rem;
     letter-spacing: 0.12em;
-    color: var(--col-text-dim);
-    background: rgba(17,17,22,0.6);
-    border: 1px solid var(--col-border);
+    color: #cc3340;
+    background: rgba(255,32,64,0.04);
+    border: 1px solid rgba(255,32,64,0.25);
     cursor: pointer;
     transition: all 0.25s ease;
   }
 
   .back-btn:hover {
-    color: var(--col-neon-green);
-    border-color: rgba(0,255,65,0.25);
-    background: rgba(0,255,65,0.04);
+    color: #ff2040;
+    border-color: rgba(255,32,64,0.5);
+    background: rgba(255,32,64,0.1);
+    box-shadow: 0 0 16px rgba(255,32,64,0.15);
+    text-shadow: 0 0 8px rgba(255,32,64,0.4);
   }
 
   .back-arrow {
@@ -699,6 +794,73 @@
 
   .back-btn:hover .back-arrow {
     transform: translateX(-4px);
+  }
+
+  /* ── Loading state ── */
+  .terminal-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 20px;
+  }
+
+  .loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--col-border);
+    border-top-color: var(--col-neon-green);
+    border-radius: 50%;
+    animation: spin-loader 0.8s linear infinite;
+  }
+
+  @keyframes spin-loader {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .loading-dots {
+    animation: pulse-dots 1.5s ease infinite;
+  }
+
+  @keyframes pulse-dots {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  /* ── Boot sequence ── */
+  .terminal-boot {
+    padding: 0;
+    min-height: 200px;
+  }
+
+  .boot-line {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    line-height: 2;
+    margin: 0;
+  }
+
+  .boot-line--green { color: var(--col-neon-green); }
+  .boot-line--dim { color: var(--col-text-dim); opacity: 0.5; }
+  .boot-line--cyan { color: var(--col-neon-cyan); }
+
+  .boot-cursor {
+    color: var(--col-neon-green);
+    animation: blink-boot 1s step-end infinite;
+  }
+
+  @keyframes blink-boot {
+    50% { opacity: 0; }
   }
 
   /* ── Visibility & animation ── */
