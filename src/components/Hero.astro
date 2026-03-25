@@ -173,6 +173,22 @@
       await typeText(statusSpan, "ALL SYSTEMS NOMINAL", CHAR_SPEED);
       await sleep(LINE_PAUSE * 2);
 
+      // "Loading.." teaser in the name font, then delete it
+      await typeText(nameLine1, "Loading..", CHAR_SPEED * 2);
+
+      // Show blinking cursor while waiting
+      nameLine1.appendChild(cursor);
+      await sleep(2000);
+      cursor.remove();
+
+      // Delete "Loading.." character by character
+      const loadingText = "Loading..";
+      for (let c = loadingText.length; c > 0; c--) {
+        nameLine1.textContent = loadingText.substring(0, c - 1);
+        await sleep(40);
+      }
+      await sleep(200);
+
       // Name — typed larger
       await typeText(nameLine1, "Samuel", CHAR_SPEED * 2);
       nameLine1.insertAdjacentHTML("afterend", "<br/>");
