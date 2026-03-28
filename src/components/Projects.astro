@@ -36,6 +36,28 @@
           <p class="loading-text">AWAITING CONNECTION<span class="loading-dots">...</span></p>
         </div>
 
+        <!-- Crash overlay (triggered by corrupted file) -->
+        <div class="crash-overlay hidden" id="crashOverlay">
+          <div class="crash-content">
+            <p class="crash-header">☠ FATAL EXCEPTION ☠</p>
+            <p class="crash-code">ERROR 0x00000404 — FILE_NOT_FOUND_BUT_ALSO_CURSED</p>
+            <div class="crash-body">
+              <p>> Attempted to open: AI_Agriculture.exe</p>
+              <p>> File integrity check: <span class="crash-red">FAILED</span></p>
+              <p>> Reason: This project doesn't exist yet lol</p>
+              <p>> Vibes: <span class="crash-red">SUSPICIOUS</span></p>
+              <p>&nbsp;</p>
+              <p>> Recovering system...</p>
+              <p>> Quarantining file...</p>
+              <p class="crash-blink">DO NOT CLICK SUSPICIOUS FILES ▌</p>
+            </div>
+            <div class="crash-progress">
+              <div class="crash-progress-bar" id="crashProgressBar"></div>
+            </div>
+            <p class="crash-status" id="crashStatus">REBOOTING IN 3...</p>
+          </div>
+        </div>
+
         <!-- Boot sequence area (typed in by JS) -->
         <div class="terminal-boot hidden" id="terminalBoot"></div>
 
@@ -50,7 +72,7 @@
           <div class="fs-view" id="viewRoot">
           <div class="terminal-output">
             <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects</span>$ ls -la</p>
-            <p class="cmd-output">total 2 directories</p>
+            <p class="cmd-output">total 3 entries</p>
             <p class="cmd-output dim">drwxr-xr-x  4 sdyer  staff  128 Mar 24 09:41 .</p>
             <p class="cmd-output dim">drwxr-xr-x  8 sdyer  staff  256 Mar 24 09:41 ..</p>
           </div>
@@ -68,6 +90,12 @@
               <span class="fs-meta">drwxr-xr-x · 1.8GB · IN_DEV</span>
               <span class="fs-arrow">→</span>
             </button>
+            <button class="fs-item fs-corrupted" id="corruptedFile">
+              <span class="fs-icon">⚠️</span>
+              <span class="fs-name corrupted-name">AI_Agriculture<span class="corrupted-ext">.̷e̶x̸e̵</span></span>
+              <span class="fs-meta corrupted-meta">-r?x--x--- · ?.??GB · UNKNOWN</span>
+              <span class="fs-arrow corrupted-arrow">⌁</span>
+            </button>
           </div>
 
           <div class="terminal-output">
@@ -82,6 +110,9 @@
           </div>
 
           <div class="project-detail">
+            <div class="detail-logo-wrap">
+              <img src="/subspatialstudio.jpeg" alt="Sub Spatial Studio logo" class="detail-logo" />
+            </div>
             <div class="detail-header">
               <div class="detail-title-row">
                 <h3 class="detail-title">SUB SPATIAL STUDIO</h3>
@@ -273,11 +304,12 @@
       const lines = [
         { text: "sdyer@creative-lab:~$ cd projects", color: "green" },
         { text: "sdyer@creative-lab:~/projects$ ls -la", color: "green" },
-        { text: "total 2 directories", color: "dim" },
+        { text: "total 3 entries", color: "dim" },
         { text: "drwxr-xr-x  4 sdyer  staff  128 Mar 24 09:41 .", color: "dim" },
         { text: "drwxr-xr-x  8 sdyer  staff  256 Mar 24 09:41 ..", color: "dim" },
         { text: "drwxr-xr-x  6 sdyer  staff  2.4G  ACTIVE  Sub_Spatial_Studio/", color: "cyan" },
         { text: "drwxr-xr-x  5 sdyer  staff  1.8G  IN_DEV  AutoCar_VR/", color: "cyan" },
+        { text: "-r?x--x---  ? sdyer  staff  ?.??G  ??????  AI_Agriculture.exe", color: "red" },
       ];
 
       for (const line of lines) {
@@ -365,6 +397,63 @@
     });
 
     backBtn.addEventListener("click", () => showView("root"));
+
+    // ── Corrupted file crash sequence ──
+    const corruptedFile = document.getElementById("corruptedFile") as HTMLButtonElement;
+    const crashOverlay = document.getElementById("crashOverlay") as HTMLElement;
+    const crashProgressBar = document.getElementById("crashProgressBar") as HTMLElement;
+    const crashStatus = document.getElementById("crashStatus") as HTMLElement;
+    const terminalWindow = document.querySelector(".terminal-window") as HTMLElement;
+
+    let hasCrashed = false;
+
+    corruptedFile.addEventListener("click", async () => {
+      if (hasCrashed) return;
+      hasCrashed = true;
+
+      // Glitch the terminal
+      terminalWindow.classList.add("glitching");
+      await sleep(300);
+
+      // Hide main content, show crash screen
+      mainEl.classList.add("hidden");
+      crashOverlay.classList.remove("hidden");
+      terminalWindow.classList.remove("glitching");
+      terminalWindow.classList.add("crash-mode");
+      terminalTitle.textContent = "⚠ SYSTEM ERROR — PROCESS KILLED (SIGFAULT)";
+
+      // Animate progress bar and countdown
+      crashProgressBar.style.transition = "width 3s linear";
+      requestAnimationFrame(() => {
+        crashProgressBar.style.width = "100%";
+      });
+
+      await sleep(1000);
+      crashStatus.textContent = "REBOOTING IN 2...";
+      await sleep(1000);
+      crashStatus.textContent = "REBOOTING IN 1...";
+      await sleep(1000);
+      crashStatus.textContent = "RESTORING SESSION...";
+      await sleep(500);
+
+      // Recover
+      terminalWindow.classList.remove("crash-mode");
+      crashOverlay.classList.add("hidden");
+      mainEl.classList.remove("hidden");
+      mainEl.style.animation = "fadeSlideIn 0.4s ease forwards";
+      terminalTitle.textContent = titles["root"];
+      showView("root");
+
+      // Mark corrupted file as broken
+      corruptedFile.classList.add("fs-corrupted--broken");
+      corruptedFile.disabled = true;
+      const nameEl = corruptedFile.querySelector(".corrupted-name") as HTMLElement;
+      if (nameEl) nameEl.innerHTML = 'AI_Agriculture<span class="corrupted-ext">.̷e̶x̸e̵</span> <span class="broken-tag">[QUARANTINED]</span>';
+      const metaEl = corruptedFile.querySelector(".corrupted-meta") as HTMLElement;
+      if (metaEl) metaEl.textContent = "FILE QUARANTINED · ACCESS DENIED";
+      const arrowEl = corruptedFile.querySelector(".corrupted-arrow") as HTMLElement;
+      if (arrowEl) arrowEl.textContent = "✕";
+    });
   });
 </script>
 
@@ -584,6 +673,28 @@
     border: 1px solid var(--col-border);
     background: var(--col-surface);
     overflow: hidden;
+  }
+
+  .detail-logo-wrap {
+    padding: 28px 28px 0;
+    display: flex;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid var(--col-border);
+  }
+
+  .detail-logo {
+    max-width: 280px;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 4px;
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
+  }
+
+  .detail-logo:hover {
+    opacity: 1;
   }
 
   .detail-header {
@@ -853,6 +964,7 @@
   .boot-line--green { color: var(--col-neon-green); }
   .boot-line--dim { color: var(--col-text-dim); opacity: 0.5; }
   .boot-line--cyan { color: var(--col-neon-cyan); }
+  .boot-line--red { color: #ff2040; opacity: 0.7; }
 
   .boot-cursor {
     color: var(--col-neon-green);
@@ -877,6 +989,226 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  /* ── Corrupted file entry ── */
+  .fs-corrupted {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(255,32,64,0.03);
+    border: 1px solid rgba(255,32,64,0.15);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+    color: inherit;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .fs-corrupted::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255,32,64,0.02) 2px,
+      rgba(255,32,64,0.02) 4px
+    );
+    pointer-events: none;
+  }
+
+  .fs-corrupted:hover {
+    background: rgba(255,32,64,0.08);
+    border-color: rgba(255,32,64,0.4);
+    transform: translateX(4px);
+    animation: glitch-jitter 0.15s ease infinite;
+  }
+
+  @keyframes glitch-jitter {
+    0%, 100% { transform: translateX(4px); }
+    25% { transform: translateX(5px) skewX(-0.5deg); }
+    75% { transform: translateX(3px) skewX(0.5deg); }
+  }
+
+  .corrupted-name {
+    color: #ff2040 !important;
+    text-shadow: 0 0 6px rgba(255,32,64,0.4);
+  }
+
+  .corrupted-ext {
+    opacity: 0.6;
+    font-size: 0.75em;
+  }
+
+  .corrupted-meta {
+    color: rgba(255,32,64,0.5) !important;
+  }
+
+  .corrupted-arrow {
+    color: #ff2040 !important;
+    animation: flicker-arrow 2s ease infinite;
+  }
+
+  @keyframes flicker-arrow {
+    0%, 90%, 100% { opacity: 1; }
+    92% { opacity: 0; }
+    94% { opacity: 1; }
+    96% { opacity: 0.3; }
+  }
+
+  /* Broken state after crash */
+  .fs-corrupted--broken {
+    cursor: not-allowed;
+    opacity: 0.35;
+    background: rgba(255,32,64,0.02);
+    border-color: rgba(255,32,64,0.08);
+    pointer-events: none;
+  }
+
+  .fs-corrupted--broken:hover {
+    transform: none;
+    animation: none;
+  }
+
+  .broken-tag {
+    font-size: 0.6rem;
+    color: #ff2040;
+    letter-spacing: 0.15em;
+    opacity: 0.6;
+  }
+
+  /* ── Crash overlay ── */
+  .crash-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #0a0208;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: crash-in 0.2s ease;
+  }
+
+  @keyframes crash-in {
+    0% { opacity: 0; transform: scale(1.05); }
+    50% { opacity: 1; transform: scale(0.98); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .crash-content {
+    max-width: 520px;
+    padding: 32px;
+    text-align: left;
+  }
+
+  .crash-header {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    color: #ff2040;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    text-shadow: 0 0 20px rgba(255,32,64,0.5);
+    animation: crash-pulse 0.5s ease infinite;
+  }
+
+  @keyframes crash-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .crash-code {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: rgba(255,32,64,0.5);
+    letter-spacing: 0.15em;
+    margin-bottom: 24px;
+  }
+
+  .crash-body {
+    margin-bottom: 24px;
+  }
+
+  .crash-body p {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.08em;
+    line-height: 2;
+    margin: 0;
+  }
+
+  .crash-red {
+    color: #ff2040;
+    font-weight: 700;
+  }
+
+  .crash-blink {
+    color: var(--col-neon-amber) !important;
+    animation: blink-boot 1s step-end infinite;
+    margin-top: 8px !important;
+  }
+
+  .crash-progress {
+    width: 100%;
+    height: 3px;
+    background: var(--col-border);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .crash-progress-bar {
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #ff2040, var(--col-neon-amber));
+    box-shadow: 0 0 8px rgba(255,32,64,0.4);
+  }
+
+  .crash-status {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--col-neon-amber);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  /* Glitch & crash-mode on terminal */
+  .glitching {
+    animation: terminal-glitch 0.3s ease;
+  }
+
+  @keyframes terminal-glitch {
+    0% { transform: translate(0); filter: none; }
+    10% { transform: translate(-3px, 1px); filter: hue-rotate(90deg); }
+    20% { transform: translate(2px, -1px); filter: hue-rotate(-90deg); }
+    30% { transform: translate(-1px, 2px); filter: brightness(1.5); }
+    40% { transform: translate(3px, 0); filter: saturate(2); }
+    50% { transform: translate(0, -2px); filter: hue-rotate(180deg); }
+    60% { transform: translate(-2px, 1px); filter: invert(0.1); }
+    70% { transform: translate(1px, 1px); filter: none; }
+    80% { transform: translate(0, -1px); filter: brightness(0.8); }
+    100% { transform: translate(0); filter: none; }
+  }
+
+  .crash-mode {
+    border-color: rgba(255,32,64,0.4) !important;
+  }
+
+  .crash-mode .terminal-titlebar {
+    background: #1a0a0a !important;
+    border-bottom-color: rgba(255,32,64,0.3) !important;
   }
 
   /* ── Mobile ── */
