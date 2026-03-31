@@ -72,7 +72,7 @@
           <div class="fs-view" id="viewRoot">
           <div class="terminal-output">
             <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects</span>$ ls -la</p>
-            <p class="cmd-output">total 3 entries</p>
+            <p class="cmd-output">total 5 entries</p>
             <p class="cmd-output dim">drwxr-xr-x  4 sdyer  staff  128 Mar 24 09:41 .</p>
             <p class="cmd-output dim">drwxr-xr-x  8 sdyer  staff  256 Mar 24 09:41 ..</p>
           </div>
@@ -88,6 +88,18 @@
               <span class="fs-icon">📁</span>
               <span class="fs-name">AutoCar_VR/</span>
               <span class="fs-meta">drwxr-xr-x · 1.8GB · IN_DEV</span>
+              <span class="fs-arrow">→</span>
+            </button>
+            <button class="fs-item fs-folder fs-folder--matrix" data-target="matrix">
+              <span class="fs-icon">🌧️</span>
+              <span class="fs-name matrix-name">matrix/</span>
+              <span class="fs-meta">drwxr-xr-x · 4.2MB · DEMO</span>
+              <span class="fs-arrow">→</span>
+            </button>
+            <button class="fs-item fs-folder fs-folder--pretext" data-target="pretextMatrix">
+              <span class="fs-icon">📝</span>
+              <span class="fs-name pretext-name">pretext_matrix/</span>
+              <span class="fs-meta">drwxr-xr-x · 2.1MB · DEMO</span>
               <span class="fs-arrow">→</span>
             </button>
             <button class="fs-item fs-corrupted" id="corruptedFile">
@@ -237,6 +249,46 @@
           </div>
         </div>
 
+        <!-- Matrix rain demo view -->
+        <div class="fs-view hidden" id="viewMatrix">
+          <div class="terminal-output">
+            <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects/matrix</span>$ ./rain --umbrella</p>
+          </div>
+
+          <div class="matrix-container" id="matrixContainer">
+            <canvas class="matrix-canvas" id="matrixCanvas"></canvas>
+            <div class="matrix-umbrella" id="matrixUmbrella" aria-label="Drag me!">
+              <span class="umbrella-icon">☂️</span>
+              <span class="umbrella-hint">drag me</span>
+            </div>
+          </div>
+
+          <div class="matrix-info">
+            <p class="matrix-tip">☂ Drag the umbrella to block the rain</p>
+            <p class="matrix-credits">// inspired by The Matrix (1999)</p>
+          </div>
+        </div>
+
+        <!-- Pretext Matrix demo view -->
+        <div class="fs-view hidden" id="viewPretextMatrix">
+          <div class="terminal-output">
+            <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects/pretext_matrix</span>$ ./pretext-layout --responsive --demo</p>
+          </div>
+
+          <div class="pretext-container" id="pretextContainer">
+            <canvas class="pretext-canvas" id="pretextCanvas"></canvas>
+            <div class="pretext-umbrella" id="pretextUmbrella" aria-label="Drag me!">
+              <span class="umbrella-icon">☂️</span>
+              <span class="umbrella-hint">drag me</span>
+            </div>
+          </div>
+
+          <div class="pretext-info">
+            <p class="pretext-tip">☂ Drag the umbrella — watch text reflow in real-time</p>
+            <p class="pretext-credits">// powered by <a href="https://github.com/chenglou/pretext" target="_blank" rel="noopener" class="pretext-link">chenglou/pretext</a></p>
+          </div>
+        </div>
+
           <!-- Back button (shown inside project views) -->
           <button class="back-btn hidden" id="backBtn">
             <span class="back-arrow">←</span> cd ..
@@ -304,11 +356,13 @@
       const lines = [
         { text: "sdyer@creative-lab:~$ cd projects", color: "green" },
         { text: "sdyer@creative-lab:~/projects$ ls -la", color: "green" },
-        { text: "total 3 entries", color: "dim" },
+        { text: "total 5 entries", color: "dim" },
         { text: "drwxr-xr-x  4 sdyer  staff  128 Mar 24 09:41 .", color: "dim" },
         { text: "drwxr-xr-x  8 sdyer  staff  256 Mar 24 09:41 ..", color: "dim" },
         { text: "drwxr-xr-x  6 sdyer  staff  2.4G  ACTIVE  Sub_Spatial_Studio/", color: "cyan" },
         { text: "drwxr-xr-x  5 sdyer  staff  1.8G  IN_DEV  AutoCar_VR/", color: "cyan" },
+        { text: "drwxr-xr-x  3 sdyer  staff  4.2M  DEMO    matrix/", color: "matrix" },
+        { text: "drwxr-xr-x  3 sdyer  staff  2.1M  DEMO    pretext_matrix/", color: "pretext" },
         { text: "-r?x--x---  ? sdyer  staff  ?.??G  ??????  AI_Agriculture.exe", color: "red" },
       ];
 
@@ -348,24 +402,44 @@
     observer.observe(section);
 
     // ── File system navigation ──
+    const viewMatrix = document.getElementById("viewMatrix") as HTMLElement;
+    const viewPretextMatrix = document.getElementById("viewPretextMatrix") as HTMLElement;
     const views: Record<string, HTMLElement> = {
       root: viewRoot,
       subSpatial: viewSubSpatial,
       autoCar: viewAutoCar,
+      matrix: viewMatrix,
+      pretextMatrix: viewPretextMatrix,
     };
 
     const titles: Record<string, string> = {
       root: "sdyer@creative-lab:~/projects",
       subSpatial: "sdyer@creative-lab:~/projects/Sub_Spatial_Studio",
       autoCar: "sdyer@creative-lab:~/projects/AutoCar_VR",
+      matrix: "sdyer@creative-lab:~/projects/matrix",
+      pretextMatrix: "sdyer@creative-lab:~/projects/pretext_matrix",
     };
 
     const pathLabels: Record<string, string> = {
       subSpatial: "Sub_Spatial_Studio",
       autoCar: "AutoCar_VR",
+      matrix: "matrix",
+      pretextMatrix: "pretext_matrix",
     };
 
+    // Matrix control functions (defined later, referenced here)
+    let startMatrix: (() => void) | null = null;
+    let stopMatrix: (() => void) | null = null;
+    
+    // Pretext control functions (defined later, referenced here)
+    let startPretext: (() => void) | null = null;
+    let stopPretext: (() => void) | null = null;
+
     function showView(key: string) {
+      // Stop matrix and pretext animations when leaving views
+      if (stopMatrix) stopMatrix();
+      if (stopPretext) stopPretext();
+
       Object.values(views).forEach((v) => v.classList.add("hidden"));
       views[key].classList.remove("hidden");
       views[key].style.animation = "fadeSlideIn 0.35s ease forwards";
@@ -381,6 +455,16 @@
           <span class="path-segment path-current">${pathLabels[key]}</span>
         `;
         backBtn.classList.remove("hidden");
+      }
+
+      // Start matrix animation when entering that view
+      if (key === "matrix" && startMatrix) {
+        setTimeout(startMatrix, 100);
+      }
+      
+      // Start pretext animation when entering that view
+      if (key === "pretextMatrix" && startPretext) {
+        setTimeout(startPretext, 100);
       }
 
       const rootEl = terminalPath.querySelector('[data-nav="root"]');
@@ -453,6 +537,415 @@
       if (metaEl) metaEl.textContent = "FILE QUARANTINED · ACCESS DENIED";
       const arrowEl = corruptedFile.querySelector(".corrupted-arrow") as HTMLElement;
       if (arrowEl) arrowEl.textContent = "✕";
+    });
+
+    // ── Matrix rain + umbrella demo ──
+    const matrixCanvas = document.getElementById("matrixCanvas") as HTMLCanvasElement;
+    const matrixContainer = document.getElementById("matrixContainer") as HTMLElement;
+    const umbrella = document.getElementById("matrixUmbrella") as HTMLElement;
+    const ctx = matrixCanvas.getContext("2d")!;
+
+    // Matrix rain configuration
+    const CHARS = "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789";
+    const FONT_SIZE = 14;
+    let columns: number[] = [];
+    let matrixRunning = false;
+    let animationId: number | null = null;
+
+    // Umbrella state
+    let umbrellaX = 0;
+    let umbrellaY = 0;
+    const UMBRELLA_RADIUS = 50;
+    let isDragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    function initMatrix() {
+      const rect = matrixContainer.getBoundingClientRect();
+      matrixCanvas.width = rect.width;
+      matrixCanvas.height = rect.height;
+
+      const colCount = Math.floor(matrixCanvas.width / FONT_SIZE);
+      columns = Array(colCount).fill(1);
+
+      // Center umbrella
+      umbrellaX = matrixCanvas.width / 2 - UMBRELLA_RADIUS;
+      umbrellaY = matrixCanvas.height / 2 - UMBRELLA_RADIUS;
+      updateUmbrellaPosition();
+    }
+
+    function updateUmbrellaPosition() {
+      umbrella.style.left = `${umbrellaX}px`;
+      umbrella.style.top = `${umbrellaY}px`;
+    }
+
+    function drawMatrix() {
+      // Semi-transparent black to create trail effect
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+
+      ctx.fillStyle = "#00ff41";
+      ctx.font = `${FONT_SIZE}px monospace`;
+
+      const umbrellaCenterX = umbrellaX + UMBRELLA_RADIUS;
+      const umbrellaCenterY = umbrellaY + UMBRELLA_RADIUS;
+
+      for (let i = 0; i < columns.length; i++) {
+        const char = CHARS[Math.floor(Math.random() * CHARS.length)];
+        const x = i * FONT_SIZE;
+        const y = columns[i] * FONT_SIZE;
+
+        // Check if this drop is under the umbrella
+        const dx = x - umbrellaCenterX;
+        const dy = y - umbrellaCenterY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < UMBRELLA_RADIUS + 10 && y > umbrellaCenterY - UMBRELLA_RADIUS) {
+          // Skip drawing under umbrella, or make it "splash"
+          if (Math.random() > 0.8) {
+            ctx.fillStyle = "rgba(0, 255, 65, 0.2)";
+            ctx.fillText(char, x, umbrellaCenterY - UMBRELLA_RADIUS + 5);
+            ctx.fillStyle = "#00ff41";
+          }
+          // Reset column to start from top
+          if (y > umbrellaCenterY) {
+            columns[i] = 0;
+          }
+        } else {
+          // Vary brightness randomly for depth effect
+          if (Math.random() > 0.95) {
+            ctx.fillStyle = "#ffffff";
+          } else if (Math.random() > 0.9) {
+            ctx.fillStyle = "#88ff88";
+          } else {
+            ctx.fillStyle = "#00ff41";
+          }
+          ctx.fillText(char, x, y);
+        }
+
+        // Reset when reaching bottom or randomly
+        if (y > matrixCanvas.height && Math.random() > 0.975) {
+          columns[i] = 0;
+        }
+        columns[i]++;
+      }
+
+      if (matrixRunning) {
+        animationId = requestAnimationFrame(drawMatrix);
+      }
+    }
+
+    startMatrix = function() {
+      if (matrixRunning) return;
+      matrixRunning = true;
+      initMatrix();
+      drawMatrix();
+    };
+
+    stopMatrix = function() {
+      matrixRunning = false;
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+    };
+
+    // Umbrella drag handlers
+    umbrella.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      const rect = umbrella.getBoundingClientRect();
+      const containerRect = matrixContainer.getBoundingClientRect();
+      dragOffsetX = e.clientX - rect.left;
+      dragOffsetY = e.clientY - rect.top;
+      umbrella.classList.add("dragging");
+      e.preventDefault();
+    });
+
+    umbrella.addEventListener("touchstart", (e) => {
+      isDragging = true;
+      const rect = umbrella.getBoundingClientRect();
+      const touch = e.touches[0];
+      dragOffsetX = touch.clientX - rect.left;
+      dragOffsetY = touch.clientY - rect.top;
+      umbrella.classList.add("dragging");
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      const containerRect = matrixContainer.getBoundingClientRect();
+      umbrellaX = Math.max(0, Math.min(containerRect.width - UMBRELLA_RADIUS * 2, e.clientX - containerRect.left - dragOffsetX));
+      umbrellaY = Math.max(0, Math.min(containerRect.height - UMBRELLA_RADIUS * 2, e.clientY - containerRect.top - dragOffsetY));
+      updateUmbrellaPosition();
+    });
+
+    document.addEventListener("touchmove", (e) => {
+      if (!isDragging) return;
+      const containerRect = matrixContainer.getBoundingClientRect();
+      const touch = e.touches[0];
+      umbrellaX = Math.max(0, Math.min(containerRect.width - UMBRELLA_RADIUS * 2, touch.clientX - containerRect.left - dragOffsetX));
+      umbrellaY = Math.max(0, Math.min(containerRect.height - UMBRELLA_RADIUS * 2, touch.clientY - containerRect.top - dragOffsetY));
+      updateUmbrellaPosition();
+    }, { passive: false });
+
+    document.addEventListener("mouseup", () => {
+      isDragging = false;
+      umbrella.classList.remove("dragging");
+    });
+
+    document.addEventListener("touchend", () => {
+      isDragging = false;
+      umbrella.classList.remove("dragging");
+    });
+
+    // Handle resize
+    window.addEventListener("resize", () => {
+      if (matrixRunning) {
+        initMatrix();
+      }
+      if (pretextRunning) {
+        initPretext();
+      }
+    });
+
+    // ── Pretext Matrix Demo ──
+    const pretextCanvas = document.getElementById("pretextCanvas") as HTMLCanvasElement;
+    const pretextContainer = document.getElementById("pretextContainer") as HTMLElement;
+    const pretextUmbrella = document.getElementById("pretextUmbrella") as HTMLElement;
+    const pretextCtx = pretextCanvas.getContext("2d")!;
+
+    // Pretext layout configuration - text that reflows around the umbrella
+    const PRETEXT_TEXT = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Integer in mauris eu nibh euismod gravida. Duis ac tellus et risus vulputate vehicula. Donec lobortis risus a elit. Etiam tempor ultrices sem. Nulla facilisi. Morbi sit amet eros. Nulla vehicula turpis ac dolor. Suspendisse sapien sem, venenatis ut, fringilla vitae, sagittis eget, libero. Sed venenatis mi ut ipsum. Phasellus tristique justo ac nisl. Donec eget sem sit amet ligula viverra gravida. Praesent metus tellus, elementum eu, semper a, adipiscing nec, purus. Cras risus ipsum, faucibus ut, ullamcorper id, varius ac, leo. Suspendisse feugiat. Suspendisse enim turpis, dictum sed, iaculis a, condimentum nec, nisi. Praesent nec nisl a purus blandit viverra. Praesent ac massa at ligula laoreet iaculis. Nulla neque dolor, sagittis eget, iaculis quis, molestie non, velit. Mauris turpis nunc, blandit et, volutpat molestie, porta ut, ligula. Fusce pharetra convallis urna. Quisque ut nisi. Donec mi odio, faucibus at, scelerisque quis, convallis in, nisi. Suspendisse non nisl sit amet velit hendrerit rutrum. Ut leo. Ut a nisl id ante tempus hendrerit. Proin pretium, leo ac pellentesque mollis, felis nunc ultrices eros, sed gravida augue augue mollis justo. Suspendisse eu ligula. Nulla facilisi. Donec id justo. Praesent porttitor, nulla vitae posuere iaculis, arcu nisl dignissim dolor, a pretium mi sem ut ipsum. Curabitur suscipit suscipit tellus. Praesent vestibulum dapibus nibh. Etiam iaculis nunc ac metus. Ut id nisl quis enim dignissim sagittis. Etiam sollicitudin, ipsum eu pulvinar rutrum, tellus ipsum laoreet sapien, quis venenatis ante odio sit amet eros. Proin magna. Duis vel nibh at velit scelerisque suscipit. Curabitur turpis. Vestibulum suscipit nulla quis orci. Fusce ac felis sit amet ligula pharetra condimentum. Maecenas egestas arcu quis ligula mattis placerat. Duis lobortis massa imperdiet quam. Suspendisse potenti. Pellentesque commodo eros a enim. Vestibulum turpis sem, aliquet eget, lobortis pellentesque, rutrum eu, nisl. Sed libero. Aliquam erat volutpat. Etiam vitae tortor. Morbi vestibulum volutpat enim. Aliquam eu nunc. Nunc sed turpis. Sed mollis, eros et ultrices tempus, mauris ipsum aliquam libero, non adipiscing dolor urna a orci. Nulla porta dolor. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos hymenaeos. Pellentesque dapibus hendrerit tortor. Praesent egestas tristique nibh. Sed a libero. Cras varius. Donec vitae orci sed dolor rutrum auctor. Fusce egestas elit eget lorem. Suspendisse nisl elit, rhoncus eget, elementum ac, condimentum eget, diam. `;
+    const PRETEXT_FONT_SIZE = 13;
+    const LINE_HEIGHT = 18;
+    let pretextRunning = false;
+    let pretextAnimationId: number | null = null;
+    let needsRedraw = true;
+    let rainTime = 0; // Time for rain animation
+
+    // Pretext umbrella state
+    let pretextUmbrellaX = 0;
+    let pretextUmbrellaY = 0;
+    const PRETEXT_UMBRELLA_RADIUS = 60;
+    let isPretextDragging = false;
+    let pretextDragOffsetX = 0;
+    let pretextDragOffsetY = 0;
+
+    function initPretext() {
+      const rect = pretextContainer.getBoundingClientRect();
+      pretextCanvas.width = rect.width;
+      pretextCanvas.height = rect.height;
+
+      // Center umbrella
+      pretextUmbrellaX = pretextCanvas.width / 2 - PRETEXT_UMBRELLA_RADIUS;
+      pretextUmbrellaY = pretextCanvas.height / 2 - PRETEXT_UMBRELLA_RADIUS;
+      updatePretextUmbrellaPosition();
+      needsRedraw = true;
+    }
+
+    function updatePretextUmbrellaPosition() {
+      pretextUmbrella.style.left = `${pretextUmbrellaX}px`;
+      pretextUmbrella.style.top = `${pretextUmbrellaY}px`;
+      needsRedraw = true;
+    }
+
+    // Check if a point is inside the umbrella's exclusion zone
+    function isInsideUmbrella(x: number, y: number): boolean {
+      const centerX = pretextUmbrellaX + PRETEXT_UMBRELLA_RADIUS;
+      const centerY = pretextUmbrellaY + PRETEXT_UMBRELLA_RADIUS;
+      const dx = x - centerX;
+      const dy = y - centerY;
+      return Math.sqrt(dx * dx + dy * dy) < PRETEXT_UMBRELLA_RADIUS + 15;
+    }
+
+    // Get the horizontal bounds for text at a given y position
+    function getLineBounds(y: number): { left: number; right: number }[] {
+      const centerX = pretextUmbrellaX + PRETEXT_UMBRELLA_RADIUS;
+      const centerY = pretextUmbrellaY + PRETEXT_UMBRELLA_RADIUS;
+      const radius = PRETEXT_UMBRELLA_RADIUS + 15;
+      
+      // Check if this line intersects the umbrella circle
+      const dy = Math.abs(y - centerY);
+      if (dy > radius) {
+        // No intersection, full width available
+        return [{ left: 10, right: pretextCanvas.width - 10 }];
+      }
+      
+      // Calculate intersection points
+      const halfChord = Math.sqrt(radius * radius - dy * dy);
+      const leftIntersect = centerX - halfChord;
+      const rightIntersect = centerX + halfChord;
+      
+      // Return segments avoiding the umbrella
+      const segments: { left: number; right: number }[] = [];
+      if (leftIntersect > 15) {
+        segments.push({ left: 10, right: leftIntersect - 5 });
+      }
+      if (rightIntersect < pretextCanvas.width - 15) {
+        segments.push({ left: rightIntersect + 5, right: pretextCanvas.width - 10 });
+      }
+      
+      return segments.length > 0 ? segments : [];
+    }
+
+    function drawPretext() {
+      // Always redraw for rain animation
+      rainTime += 0.03;
+
+      // Clear canvas
+      pretextCtx.fillStyle = "#000000";
+      pretextCtx.fillRect(0, 0, pretextCanvas.width, pretextCanvas.height);
+
+      pretextCtx.font = `${PRETEXT_FONT_SIZE}px "Share Tech Mono", monospace`;
+      pretextCtx.fillStyle = "#00ffff";
+      pretextCtx.textBaseline = "top";
+
+      const chars = PRETEXT_TEXT.replace(/\s/g, '').split("");
+      const charWidth = PRETEXT_FONT_SIZE * 0.6; // monospace char width
+      let charIndex = 0;
+      let y = 8;
+
+      // Layout text character by character, wrapping around the umbrella
+      while (y < pretextCanvas.height - LINE_HEIGHT && charIndex < chars.length) {
+        const segments = getLineBounds(y + PRETEXT_FONT_SIZE / 2);
+        
+        for (const segment of segments) {
+          let x = segment.left;
+          const maxX = segment.right;
+          
+          while (charIndex < chars.length && x + charWidth <= maxX) {
+            const char = chars[charIndex % chars.length];
+            
+            // Rain effect: vertical streaks of brightness falling north to south
+            const rainSpeed = 120; // faster fall speed
+            const rainSpacing = 12; // tighter columns for more drops
+            const rainLength = 40; // shorter streaks for more distinct drops
+            
+            // Calculate which "rain column" this character is in
+            const rainColumn = Math.floor(x / rainSpacing);
+            // Use a hash-like offset based on column to randomize start positions
+            // but keep each column's rain falling straight down (no diagonal sweep)
+            const columnSeed = (rainColumn * 137) % 100; // pseudo-random per column
+            const rainY = ((rainTime * rainSpeed + columnSeed * 4) % (pretextCanvas.height + rainLength * 2)) - rainLength;
+            
+            // Distance from current y to the rain drop center
+            const distFromRain = Math.abs(y - rainY);
+            
+            // Brightness based on proximity to rain drop
+            let brightness = 0.2; // base dim
+            if (distFromRain < rainLength) {
+              // Gradient: dim at top of drop, bright at bottom (leading edge)
+              const posInDrop = (y - (rainY - rainLength)) / rainLength;
+              brightness = 0.2 + Math.max(0, posInDrop) * 0.6;
+              
+              // Extra bright at the very leading edge (bottom tip of drop)
+              if (y > rainY && distFromRain < 8) {
+                brightness = 1.0;
+              }
+            }
+            
+            const g = Math.floor(255 * brightness);
+            const b = Math.floor(255 * brightness);
+            pretextCtx.fillStyle = `rgb(0, ${g}, ${b})`;
+            
+            pretextCtx.fillText(char, x, y);
+            x += charWidth;
+            charIndex++;
+          }
+        }
+        
+        y += LINE_HEIGHT;
+      }
+
+      // Draw subtle glow around umbrella area
+      const gradient = pretextCtx.createRadialGradient(
+        pretextUmbrellaX + PRETEXT_UMBRELLA_RADIUS,
+        pretextUmbrellaY + PRETEXT_UMBRELLA_RADIUS,
+        PRETEXT_UMBRELLA_RADIUS - 10,
+        pretextUmbrellaX + PRETEXT_UMBRELLA_RADIUS,
+        pretextUmbrellaY + PRETEXT_UMBRELLA_RADIUS,
+        PRETEXT_UMBRELLA_RADIUS + 20
+      );
+      gradient.addColorStop(0, "rgba(0, 255, 255, 0.05)");
+      gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+      pretextCtx.fillStyle = gradient;
+      pretextCtx.beginPath();
+      pretextCtx.arc(
+        pretextUmbrellaX + PRETEXT_UMBRELLA_RADIUS,
+        pretextUmbrellaY + PRETEXT_UMBRELLA_RADIUS,
+        PRETEXT_UMBRELLA_RADIUS + 20,
+        0,
+        Math.PI * 2
+      );
+      pretextCtx.fill();
+
+      if (pretextRunning) {
+        pretextAnimationId = requestAnimationFrame(drawPretext);
+      }
+    }
+
+    startPretext = function() {
+      if (pretextRunning) return;
+      pretextRunning = true;
+      initPretext();
+      drawPretext();
+    };
+
+    stopPretext = function() {
+      pretextRunning = false;
+      if (pretextAnimationId) {
+        cancelAnimationFrame(pretextAnimationId);
+        pretextAnimationId = null;
+      }
+    };
+
+    // Pretext umbrella drag handlers
+    pretextUmbrella.addEventListener("mousedown", (e) => {
+      isPretextDragging = true;
+      const rect = pretextUmbrella.getBoundingClientRect();
+      pretextDragOffsetX = e.clientX - rect.left;
+      pretextDragOffsetY = e.clientY - rect.top;
+      pretextUmbrella.classList.add("dragging");
+      e.preventDefault();
+    });
+
+    pretextUmbrella.addEventListener("touchstart", (e) => {
+      isPretextDragging = true;
+      const rect = pretextUmbrella.getBoundingClientRect();
+      const touch = e.touches[0];
+      pretextDragOffsetX = touch.clientX - rect.left;
+      pretextDragOffsetY = touch.clientY - rect.top;
+      pretextUmbrella.classList.add("dragging");
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!isPretextDragging) return;
+      const containerRect = pretextContainer.getBoundingClientRect();
+      pretextUmbrellaX = Math.max(0, Math.min(containerRect.width - PRETEXT_UMBRELLA_RADIUS * 2, e.clientX - containerRect.left - pretextDragOffsetX));
+      pretextUmbrellaY = Math.max(0, Math.min(containerRect.height - PRETEXT_UMBRELLA_RADIUS * 2, e.clientY - containerRect.top - pretextDragOffsetY));
+      updatePretextUmbrellaPosition();
+      needsRedraw = true;
+    });
+
+    document.addEventListener("touchmove", (e) => {
+      if (!isPretextDragging) return;
+      const containerRect = pretextContainer.getBoundingClientRect();
+      const touch = e.touches[0];
+      pretextUmbrellaX = Math.max(0, Math.min(containerRect.width - PRETEXT_UMBRELLA_RADIUS * 2, touch.clientX - containerRect.left - pretextDragOffsetX));
+      pretextUmbrellaY = Math.max(0, Math.min(containerRect.height - PRETEXT_UMBRELLA_RADIUS * 2, touch.clientY - containerRect.top - pretextDragOffsetY));
+      updatePretextUmbrellaPosition();
+      needsRedraw = true;
+    }, { passive: false });
+
+    document.addEventListener("mouseup", () => {
+      isPretextDragging = false;
+      pretextUmbrella.classList.remove("dragging");
+    });
+
+    document.addEventListener("touchend", () => {
+      isPretextDragging = false;
+      pretextUmbrella.classList.remove("dragging");
     });
   });
 </script>
@@ -965,6 +1458,7 @@
   .boot-line--dim { color: var(--col-text-dim); opacity: 0.5; }
   .boot-line--cyan { color: var(--col-neon-cyan); }
   .boot-line--red { color: #ff2040; opacity: 0.7; }
+  .boot-line--matrix { color: #00ff41; text-shadow: 0 0 8px rgba(0,255,65,0.5); }
 
   .boot-cursor {
     color: var(--col-neon-green);
@@ -989,6 +1483,230 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  /* ── Matrix folder entry ── */
+  .fs-folder--matrix {
+    background: rgba(0,255,65,0.02);
+    border-color: rgba(0,255,65,0.15);
+  }
+
+  .fs-folder--matrix:hover {
+    background: rgba(0,255,65,0.08);
+    border-color: rgba(0,255,65,0.35);
+  }
+
+  .matrix-name {
+    color: #00ff41 !important;
+    text-shadow: 0 0 8px rgba(0,255,65,0.4);
+  }
+
+  /* ── Matrix rain container ── */
+  .matrix-container {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    background: #000;
+    border: 1px solid var(--col-border);
+    overflow: hidden;
+    cursor: default;
+  }
+
+  .matrix-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .matrix-umbrella {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    z-index: 10;
+    transition: transform 0.1s ease;
+  }
+
+  .matrix-umbrella.dragging {
+    cursor: grabbing;
+    transform: scale(1.1);
+  }
+
+  .umbrella-icon {
+    font-size: 3rem;
+    filter: drop-shadow(0 0 8px rgba(255,255,255,0.3));
+    transition: transform 0.2s ease;
+  }
+
+  .matrix-umbrella:hover .umbrella-icon {
+    transform: rotate(-5deg) scale(1.05);
+  }
+
+  .umbrella-hint {
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    transition: opacity 0.3s ease;
+  }
+
+  .matrix-umbrella.dragging .umbrella-hint,
+  .matrix-umbrella:hover .umbrella-hint {
+    opacity: 0;
+  }
+
+  .matrix-info {
+    margin-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .matrix-tip {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: #00ff41;
+    letter-spacing: 0.1em;
+  }
+
+  .matrix-credits {
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.1em;
+    opacity: 0.5;
+  }
+
+  /* ── Pretext folder entry ── */
+  .fs-folder--pretext {
+    background: rgba(0,255,255,0.02);
+    border-color: rgba(0,255,255,0.15);
+  }
+
+  .fs-folder--pretext:hover {
+    background: rgba(0,255,255,0.08);
+    border-color: rgba(0,255,255,0.35);
+  }
+
+  .pretext-name {
+    color: #00ffff !important;
+    text-shadow: 0 0 8px rgba(0,255,255,0.4);
+  }
+
+  /* ── Pretext rain container ── */
+  .pretext-container {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    background: #000;
+    border: 1px solid rgba(0,255,255,0.3);
+    overflow: hidden;
+    cursor: default;
+  }
+
+  .pretext-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .pretext-umbrella {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    z-index: 10;
+    transition: transform 0.1s ease;
+  }
+
+  .pretext-umbrella.dragging {
+    cursor: grabbing;
+    transform: scale(1.1);
+  }
+
+  .pretext-umbrella .umbrella-icon {
+    font-size: 3rem;
+    filter: drop-shadow(0 0 8px rgba(0,255,255,0.4));
+    transition: transform 0.2s ease;
+  }
+
+  .pretext-umbrella:hover .umbrella-icon {
+    transform: rotate(-5deg) scale(1.05);
+  }
+
+  .pretext-umbrella .umbrella-hint {
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    color: rgba(0,255,255,0.6);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    transition: opacity 0.3s ease;
+  }
+
+  .pretext-umbrella.dragging .umbrella-hint,
+  .pretext-umbrella:hover .umbrella-hint {
+    opacity: 0;
+  }
+
+  .pretext-info {
+    margin-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pretext-tip {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: #00ffff;
+    letter-spacing: 0.1em;
+  }
+
+  .pretext-credits {
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.1em;
+    opacity: 0.5;
+  }
+
+  .pretext-credits a {
+    color: #00ffff;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .pretext-credits a:hover {
+    opacity: 0.7;
+  }
+
+  /* ── Boot line colors ── */
+  .boot-line--pretext {
+    color: #00ffff;
+    text-shadow: 0 0 8px rgba(0,255,255,0.4);
   }
 
   /* ── Corrupted file entry ── */
