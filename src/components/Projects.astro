@@ -115,8 +115,37 @@
           </div>
         </div>
 
-        <!-- Sub Spatial Studio view -->
+        <!-- Sub Spatial Studio directory view -->
         <div class="fs-view hidden" id="viewSubSpatial">
+          <div class="terminal-output">
+            <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects/Sub_Spatial_Studio</span>$ ls -la</p>
+            <p class="cmd-output">total 2 entries</p>
+            <p class="cmd-output dim">drwxr-xr-x  3 sdyer  staff   96 Mar 24 09:41 .</p>
+            <p class="cmd-output dim">drwxr-xr-x  6 sdyer  staff  192 Mar 24 09:41 ..</p>
+          </div>
+
+          <div class="fs-listing">
+            <button class="fs-item fs-folder fs-folder--file" data-target="subSpatialReadme">
+              <span class="fs-icon">📄</span>
+              <span class="fs-name">README.md</span>
+              <span class="fs-meta">-rw-r--r-- · 2.4KB · STUDIO</span>
+              <span class="fs-arrow">→</span>
+            </button>
+            <button class="fs-item fs-folder fs-folder--connectz" data-target="connectz">
+              <span class="fs-icon">🛰️</span>
+              <span class="fs-name connectz-name">Connectz.md</span>
+              <span class="fs-meta">-rw-r--r-- · 128MB · TESTING</span>
+              <span class="fs-arrow">→</span>
+            </button>
+          </div>
+
+          <div class="terminal-output">
+            <p class="cmd-hint">Click a file to view ▸</p>
+          </div>
+        </div>
+
+        <!-- Sub Spatial Studio README detail view -->
+        <div class="fs-view hidden" id="viewSubSpatialReadme">
           <div class="terminal-output">
             <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects/Sub_Spatial_Studio</span>$ cat README.md</p>
           </div>
@@ -289,6 +318,79 @@
           </div>
         </div>
 
+        <!-- Connectz iOS app view -->
+        <div class="fs-view hidden" id="viewConnectz">
+          <div class="terminal-output">
+            <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects/Sub_Spatial_Studio</span>$ cat Connectz.md</p>
+          </div>
+
+          <div class="project-detail">
+            <div class="connectz-globe-wrap">
+              <canvas class="connectz-canvas" id="connectzCanvas"></canvas>
+              <div class="connectz-hud" aria-hidden="true">
+                <span class="hud-tl"><span class="hud-dot"></span>UPLINK</span>
+                <span class="hud-tr">ORBITAL · SYNC</span>
+                <span class="hud-bl">v1.0.0-beta</span>
+                <span class="hud-br">iOS · TESTFLIGHT</span>
+              </div>
+            </div>
+
+            <div class="detail-header">
+              <div class="detail-title-row">
+                <h3 class="detail-title">CONNECTZ</h3>
+                <span class="detail-status status--testing">◉ IN TESTING</span>
+              </div>
+              <p class="detail-subtitle">iOS Mobile App — Social Connections, Reimagined</p>
+            </div>
+
+            <div class="detail-body">
+              <div class="detail-section">
+                <p class="detail-label">// OVERVIEW</p>
+                <p class="detail-text">
+                  A mobile application currently in closed iOS TestFlight beta, built under <a href="https://subspatial.studio" target="_blank" rel="noopener" class="inline-link">Sub Spatial Studio</a>. Connectz explores a fresh model for how people discover, share, and stay connected — trimming the signal-to-noise ratio of modern communication into something that actually feels good to open.
+                </p>
+              </div>
+
+              <div class="detail-section">
+                <p class="detail-label">// STATUS</p>
+                <div class="detail-list">
+                  <span class="detail-list-item">▹ Closed iOS TestFlight beta — invite-only</span>
+                  <span class="detail-list-item">▹ Iterating with early testers on feedback</span>
+                  <span class="detail-list-item">▹ Public App Store launch pending</span>
+                </div>
+              </div>
+
+              <div class="detail-section">
+                <p class="detail-label">// TECH STACK</p>
+                <div class="detail-tags">
+                  <span class="d-tag">Swift</span>
+                  <span class="d-tag">SwiftUI</span>
+                  <span class="d-tag">iOS</span>
+                  <span class="d-tag">TestFlight</span>
+                  <span class="d-tag">CloudKit</span>
+                </div>
+              </div>
+
+              <div class="detail-actions">
+                <a href="https://subspatial.studio/products/connectz" target="_blank" rel="noopener" class="detail-link detail-link--primary">
+                  <span class="link-icon">◈</span> View Product Page <span class="external-icon">↗</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- File tree decoration -->
+            <div class="detail-files">
+              <p class="files-header">$ tree -L 1</p>
+              <p class="file-entry">├── Connectz.xcodeproj/</p>
+              <p class="file-entry">├── Sources/</p>
+              <p class="file-entry">├── Resources/</p>
+              <p class="file-entry">├── README.md</p>
+              <p class="file-entry">└── Package.swift</p>
+              <p class="file-count">3 directories, 2 files</p>
+            </div>
+          </div>
+        </div>
+
           <!-- Back button (shown inside project views) -->
           <button class="back-btn hidden" id="backBtn">
             <span class="back-arrow">←</span> cd ..
@@ -301,6 +403,8 @@
 
 <!-- File system navigation + scroll-triggered boot script -->
 <script>
+  import * as THREE from "three";
+
   document.addEventListener("DOMContentLoaded", () => {
     const CHAR_SPEED = 22;
     const LINE_PAUSE = 200;
@@ -312,6 +416,7 @@
     const mainEl = document.getElementById("terminalMain") as HTMLElement;
     const viewRoot = document.getElementById("viewRoot") as HTMLElement;
     const viewSubSpatial = document.getElementById("viewSubSpatial") as HTMLElement;
+    const viewSubSpatialReadme = document.getElementById("viewSubSpatialReadme") as HTMLElement;
     const viewAutoCar = document.getElementById("viewAutoCar") as HTMLElement;
     const backBtn = document.getElementById("backBtn") as HTMLElement;
     const terminalTitle = document.getElementById("terminalTitle") as HTMLElement;
@@ -404,56 +509,101 @@
     // ── File system navigation ──
     const viewMatrix = document.getElementById("viewMatrix") as HTMLElement;
     const viewPretextMatrix = document.getElementById("viewPretextMatrix") as HTMLElement;
+    const viewConnectz = document.getElementById("viewConnectz") as HTMLElement;
     const views: Record<string, HTMLElement> = {
       root: viewRoot,
       subSpatial: viewSubSpatial,
+      subSpatialReadme: viewSubSpatialReadme,
       autoCar: viewAutoCar,
       matrix: viewMatrix,
       pretextMatrix: viewPretextMatrix,
+      connectz: viewConnectz,
     };
 
     const titles: Record<string, string> = {
       root: "sdyer@creative-lab:~/projects",
       subSpatial: "sdyer@creative-lab:~/projects/Sub_Spatial_Studio",
+      subSpatialReadme: "sdyer@creative-lab:~/projects/Sub_Spatial_Studio/README.md",
       autoCar: "sdyer@creative-lab:~/projects/AutoCar_VR",
       matrix: "sdyer@creative-lab:~/projects/matrix",
       pretextMatrix: "sdyer@creative-lab:~/projects/pretext_matrix",
+      connectz: "sdyer@creative-lab:~/projects/Sub_Spatial_Studio/Connectz.md",
     };
 
     const pathLabels: Record<string, string> = {
       subSpatial: "Sub_Spatial_Studio",
+      subSpatialReadme: "README.md",
       autoCar: "AutoCar_VR",
       matrix: "matrix",
       pretextMatrix: "pretext_matrix",
+      connectz: "Connectz.md",
     };
+
+    // Parent map for nested navigation (used by breadcrumbs + back button)
+    const parents: Record<string, string | null> = {
+      root: null,
+      subSpatial: "root",
+      subSpatialReadme: "subSpatial",
+      autoCar: "root",
+      matrix: "root",
+      pretextMatrix: "root",
+      connectz: "subSpatial",
+    };
+
+    let currentKey: string = "root";
 
     // Matrix control functions (defined later, referenced here)
     let startMatrix: (() => void) | null = null;
     let stopMatrix: (() => void) | null = null;
-    
+
     // Pretext control functions (defined later, referenced here)
     let startPretext: (() => void) | null = null;
     let stopPretext: (() => void) | null = null;
 
+    // Connectz control functions (defined later, referenced here)
+    let startConnectz: (() => void) | null = null;
+    let stopConnectz: (() => void) | null = null;
+
+    function buildBreadcrumb(key: string): string {
+      // Walk up the parents chain to build the full path
+      const chain: string[] = [];
+      let cursor: string | null = key;
+      while (cursor) {
+        chain.unshift(cursor);
+        cursor = parents[cursor] ?? null;
+      }
+
+      const parts: string[] = [];
+      chain.forEach((k, i) => {
+        const isLast = i === chain.length - 1;
+        if (k === "root") {
+          parts.push(`<span class="path-segment path-root" data-nav="root">~/projects</span>`);
+        } else if (isLast) {
+          parts.push(`<span class="path-segment path-current">${pathLabels[k]}</span>`);
+        } else {
+          parts.push(`<span class="path-segment path-link" data-nav="${k}">${pathLabels[k]}</span>`);
+        }
+      });
+      return parts.join('<span class="path-sep">/</span>');
+    }
+
     function showView(key: string) {
-      // Stop matrix and pretext animations when leaving views
+      // Stop matrix, pretext, and connectz animations when leaving views
       if (stopMatrix) stopMatrix();
       if (stopPretext) stopPretext();
+      if (stopConnectz) stopConnectz();
+
+      currentKey = key;
 
       Object.values(views).forEach((v) => v.classList.add("hidden"));
       views[key].classList.remove("hidden");
       views[key].style.animation = "fadeSlideIn 0.35s ease forwards";
       terminalTitle.textContent = titles[key];
 
+      terminalPath.innerHTML = buildBreadcrumb(key);
       if (key === "root") {
-        terminalPath.innerHTML = `<span class="path-segment path-root" data-nav="root">~/projects</span>`;
         backBtn.classList.add("hidden");
       } else {
-        terminalPath.innerHTML = `
-          <span class="path-segment path-root" data-nav="root">~/projects</span>
-          <span class="path-sep">/</span>
-          <span class="path-segment path-current">${pathLabels[key]}</span>
-        `;
         backBtn.classList.remove("hidden");
       }
 
@@ -461,16 +611,22 @@
       if (key === "matrix" && startMatrix) {
         setTimeout(startMatrix, 100);
       }
-      
+
       // Start pretext animation when entering that view
       if (key === "pretextMatrix" && startPretext) {
         setTimeout(startPretext, 100);
       }
 
-      const rootEl = terminalPath.querySelector('[data-nav="root"]');
-      if (rootEl) {
-        rootEl.addEventListener("click", () => showView("root"));
+      // Start connectz globe animation when entering that view
+      if (key === "connectz" && startConnectz) {
+        setTimeout(startConnectz, 100);
       }
+
+      // Wire up clickable breadcrumb segments (root + intermediate parents)
+      terminalPath.querySelectorAll<HTMLElement>("[data-nav]").forEach((el) => {
+        const navKey = el.dataset.nav;
+        if (navKey) el.addEventListener("click", () => showView(navKey));
+      });
     }
 
     document.querySelectorAll(".fs-folder").forEach((btn) => {
@@ -480,7 +636,10 @@
       });
     });
 
-    backBtn.addEventListener("click", () => showView("root"));
+    backBtn.addEventListener("click", () => {
+      const parent = parents[currentKey] ?? "root";
+      showView(parent);
+    });
 
     // ── Corrupted file crash sequence ──
     const corruptedFile = document.getElementById("corruptedFile") as HTMLButtonElement;
@@ -705,6 +864,9 @@
       }
       if (pretextRunning) {
         initPretext();
+      }
+      if (connectzRunning) {
+        initConnectz();
       }
     });
 
@@ -947,6 +1109,226 @@
       isPretextDragging = false;
       pretextUmbrella.classList.remove("dragging");
     });
+
+    // ── Connectz 3D dotted globe (three.js) ──
+    const connectzCanvas = document.getElementById("connectzCanvas") as HTMLCanvasElement;
+    let connectzRunning = false;
+    let connectzAnimationId: number | null = null;
+    let connectzT = 0;
+
+    // Scene state
+    let cScene: THREE.Scene | null = null;
+    let cCamera: THREE.PerspectiveCamera | null = null;
+    let cRenderer: THREE.WebGLRenderer | null = null;
+    let cGlobeGroup: THREE.Group | null = null;
+    let cSatGeom: THREE.BufferGeometry | null = null;
+
+    // Satellite orbits
+    const cSats = [
+      { orbitR: 1.18, tilt: 0.25, phase: 0,            speed: 0.55 },
+      { orbitR: 1.32, tilt: -0.48, phase: Math.PI / 2, speed: -0.38 },
+      { orbitR: 1.50, tilt: 0.85, phase: Math.PI,      speed: 0.75 },
+      { orbitR: 1.25, tilt: -0.7, phase: Math.PI * 0.6, speed: -0.45 },
+    ];
+
+    // Continent seed blobs on unit sphere (lat, lon in rad, radius, strength)
+    const CONTINENTS = [
+      { lat: 0.95, lon: -1.75, r: 0.55, s: 1.00 }, // N America north
+      { lat: 0.50, lon: -1.55, r: 0.38, s: 0.85 }, // N America south
+      { lat: -0.30, lon: -1.10, r: 0.48, s: 0.95 }, // S America
+      { lat: 0.25, lon: 0.35, r: 0.55, s: 1.00 }, // Africa
+      { lat: 0.95, lon: 0.35, r: 0.25, s: 0.70 }, // Europe
+      { lat: 0.95, lon: 1.30, r: 0.55, s: 1.00 }, // Asia
+      { lat: 0.30, lon: 1.60, r: 0.30, s: 0.75 }, // India/SE Asia
+      { lat: -0.45, lon: 2.35, r: 0.28, s: 0.70 }, // Australia
+      { lat: -1.25, lon: 0.0, r: 0.45, s: 0.55 }, // Antarctica
+    ];
+
+    function landScore(lat: number, lon: number): number {
+      let best = 0;
+      for (const c of CONTINENTS) {
+        const cosD =
+          Math.sin(lat) * Math.sin(c.lat) +
+          Math.cos(lat) * Math.cos(c.lat) * Math.cos(lon - c.lon);
+        const gd = Math.acos(Math.max(-1, Math.min(1, cosD)));
+        const f = Math.max(0, 1 - gd / c.r) * c.s;
+        if (f > best) best = f;
+      }
+      // Layered noise for ragged coastlines
+      const n =
+        Math.sin(lat * 8 + lon * 5) * 0.055 +
+        Math.cos(lat * 11 - lon * 7) * 0.045 +
+        Math.sin(lat * 17 + lon * 13) * 0.035;
+      return best + n;
+    }
+
+    function buildGlobePoints(): THREE.BufferGeometry {
+      const TOTAL = 18000;
+      const pos: number[] = [];
+      const col: number[] = [];
+      const COAST = { r: 1.0, g: 1.0, b: 1.0 };
+      const LAND = { r: 1.0, g: 0.82, b: 0.55 };
+      const OCEAN = { r: 0.32, g: 0.18, b: 0.06 };
+
+      for (let i = 0; i < TOTAL; i++) {
+        const y = 1 - (i / (TOTAL - 1)) * 2;
+        const rad = Math.sqrt(1 - y * y);
+        const theta = i * Math.PI * (3 - Math.sqrt(5));
+        const x = Math.cos(theta) * rad;
+        const z = Math.sin(theta) * rad;
+
+        const lat = Math.asin(y);
+        const lon = Math.atan2(z, x);
+        const score = landScore(lat, lon);
+        const rnd = Math.random();
+
+        let c: { r: number; g: number; b: number };
+        if (score > 0.55) {
+          if (rnd < 0.35) continue;
+          c = LAND;
+        } else if (score > 0.47) {
+          c = COAST;
+        } else if (score > 0.40) {
+          if (rnd < 0.65) continue;
+          c = LAND;
+        } else {
+          if (rnd < 0.965) continue;
+          c = OCEAN;
+        }
+        pos.push(x, y, z);
+        col.push(c.r, c.g, c.b);
+      }
+
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      geom.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+      return geom;
+    }
+
+    function initConnectz() {
+      const parent = connectzCanvas.parentElement;
+      if (!parent) return;
+      const rect = parent.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+
+      if (!cRenderer) {
+        cRenderer = new THREE.WebGLRenderer({
+          canvas: connectzCanvas,
+          antialias: true,
+          alpha: false,
+        });
+        cRenderer.setClearColor(0x05040a, 1);
+      }
+      cRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      cRenderer.setSize(rect.width, rect.height, true);
+
+      if (!cScene) {
+        cScene = new THREE.Scene();
+        cCamera = new THREE.PerspectiveCamera(36, rect.width / rect.height, 0.1, 100);
+        cCamera.position.set(0, 0.35, 3.6);
+        cCamera.lookAt(0, 0, 0);
+
+        cGlobeGroup = new THREE.Group();
+        cGlobeGroup.rotation.z = -0.32; // axial tilt
+        cScene.add(cGlobeGroup);
+
+        const globeGeom = buildGlobePoints();
+        const globeMat = new THREE.PointsMaterial({
+          size: 0.022,
+          vertexColors: true,
+          sizeAttenuation: true,
+          transparent: true,
+          opacity: 0.95,
+          depthWrite: false,
+        });
+        const globe = new THREE.Points(globeGeom, globeMat);
+        cGlobeGroup.add(globe);
+
+        // Satellites
+        const satPos = new Float32Array(cSats.length * 3);
+        cSatGeom = new THREE.BufferGeometry();
+        cSatGeom.setAttribute("position", new THREE.BufferAttribute(satPos, 3));
+        const satMat = new THREE.PointsMaterial({
+          color: 0xffd88a,
+          size: 0.045,
+          sizeAttenuation: true,
+          transparent: true,
+          opacity: 1,
+          depthWrite: false,
+        });
+        const satellites = new THREE.Points(cSatGeom, satMat);
+        satellites.frustumCulled = false;
+        cScene.add(satellites);
+
+        // Distant starfield behind the globe
+        const STAR_COUNT = 500;
+        const starPos = new Float32Array(STAR_COUNT * 3);
+        for (let i = 0; i < STAR_COUNT; i++) {
+          const u = Math.random() * 2 - 1;
+          const t = Math.random() * Math.PI * 2;
+          const sr = Math.sqrt(1 - u * u);
+          const R = 25;
+          starPos[i * 3] = Math.cos(t) * sr * R;
+          starPos[i * 3 + 1] = u * R;
+          starPos[i * 3 + 2] = Math.sin(t) * sr * R;
+        }
+        const starGeom = new THREE.BufferGeometry();
+        starGeom.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
+        const starMat = new THREE.PointsMaterial({
+          color: 0xff9c55,
+          size: 0.9,
+          sizeAttenuation: false,
+          transparent: true,
+          opacity: 0.25,
+          depthWrite: false,
+        });
+        cScene.add(new THREE.Points(starGeom, starMat));
+      } else if (cCamera) {
+        cCamera.aspect = rect.width / rect.height;
+        cCamera.updateProjectionMatrix();
+      }
+    }
+
+    function drawConnectz() {
+      if (!cRenderer || !cScene || !cCamera || !cGlobeGroup) return;
+      connectzT += 0.01;
+      cGlobeGroup.rotation.y = connectzT * 0.35;
+
+      if (cSatGeom) {
+        const posAttr = cSatGeom.getAttribute("position") as THREE.BufferAttribute;
+        const arr = posAttr.array as Float32Array;
+        for (let i = 0; i < cSats.length; i++) {
+          const s = cSats[i];
+          const a = connectzT * s.speed + s.phase;
+          const ox = Math.cos(a) * s.orbitR;
+          const oz = Math.sin(a) * s.orbitR;
+          arr[i * 3] = ox;
+          arr[i * 3 + 1] = oz * Math.sin(s.tilt);
+          arr[i * 3 + 2] = oz * Math.cos(s.tilt);
+        }
+        posAttr.needsUpdate = true;
+      }
+
+      cRenderer.render(cScene, cCamera);
+      if (connectzRunning) {
+        connectzAnimationId = requestAnimationFrame(drawConnectz);
+      }
+    }
+
+    startConnectz = function () {
+      if (connectzRunning) return;
+      connectzRunning = true;
+      initConnectz();
+      drawConnectz();
+    };
+
+    stopConnectz = function () {
+      connectzRunning = false;
+      if (connectzAnimationId) {
+        cancelAnimationFrame(connectzAnimationId);
+        connectzAnimationId = null;
+      }
+    };
   });
 </script>
 
@@ -1032,12 +1414,14 @@
     color: var(--col-neon-cyan);
   }
 
-  .path-root {
+  .path-root,
+  .path-link {
     cursor: pointer;
     transition: color 0.2s;
   }
 
-  .path-root:hover {
+  .path-root:hover,
+  .path-link:hover {
     color: var(--col-neon-green);
     text-shadow: 0 0 8px rgba(0,255,65,0.3);
   }
@@ -1224,6 +1608,19 @@
 
   .status--active { color: var(--col-neon-green); }
   .status--dev { color: var(--col-neon-amber); }
+  .status--testing { color: #ff8800; text-shadow: 0 0 8px rgba(255, 136, 0, 0.35); }
+
+  .inline-link {
+    color: var(--col-neon-cyan);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .inline-link:hover {
+    color: var(--col-neon-green);
+    border-color: var(--col-neon-green);
+  }
 
   .detail-subtitle {
     font-family: var(--font-mono);
@@ -1459,6 +1856,7 @@
   .boot-line--cyan { color: var(--col-neon-cyan); }
   .boot-line--red { color: #ff2040; opacity: 0.7; }
   .boot-line--matrix { color: #00ff41; text-shadow: 0 0 8px rgba(0,255,65,0.5); }
+  .boot-line--connectz { color: #ff8800; text-shadow: 0 0 8px rgba(255, 136, 0, 0.4); }
 
   .boot-cursor {
     color: var(--col-neon-green);
@@ -1707,6 +2105,86 @@
   .boot-line--pretext {
     color: #00ffff;
     text-shadow: 0 0 8px rgba(0,255,255,0.4);
+  }
+
+  /* ── Connectz folder entry ── */
+  .fs-folder--connectz {
+    background: rgba(255, 136, 0, 0.025);
+    border-color: rgba(255, 136, 0, 0.18);
+  }
+
+  .fs-folder--connectz:hover {
+    background: rgba(255, 136, 0, 0.08);
+    border-color: rgba(255, 136, 0, 0.4);
+  }
+
+  .connectz-name {
+    color: #ff8800 !important;
+    text-shadow: 0 0 8px rgba(255, 136, 0, 0.4);
+  }
+
+  .fs-folder--connectz:hover .fs-name,
+  .fs-folder--connectz:hover .fs-arrow {
+    color: #ffb040;
+    text-shadow: 0 0 10px rgba(255, 136, 0, 0.55);
+  }
+
+  /* ── Connectz globe display ── */
+  .connectz-globe-wrap {
+    position: relative;
+    width: 100%;
+    height: 360px;
+    background:
+      radial-gradient(ellipse at center, rgba(255, 136, 0, 0.06) 0%, rgba(10, 6, 5, 0) 55%),
+      radial-gradient(ellipse at center, #0a0605 0%, #05040a 70%, #000 100%);
+    border-bottom: 1px solid var(--col-border);
+    overflow: hidden;
+  }
+
+  .connectz-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .connectz-hud {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .connectz-hud > span {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    color: rgba(255, 180, 60, 0.75);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    padding: 12px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .hud-tl { top: 0; left: 0; }
+  .hud-tr { top: 0; right: 0; }
+  .hud-bl { bottom: 0; left: 0; }
+  .hud-br { bottom: 0; right: 0; color: rgba(255, 245, 210, 0.55); }
+
+  .hud-dot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #ff8800;
+    box-shadow: 0 0 8px #ff8800;
+    animation: hud-uplink-pulse 1.4s ease infinite;
+  }
+
+  @keyframes hud-uplink-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.25; transform: scale(0.75); }
   }
 
   /* ── Corrupted file entry ── */
@@ -1958,6 +2436,16 @@
     .detail-title-row {
       flex-direction: column;
       align-items: flex-start;
+    }
+
+    .connectz-globe-wrap {
+      height: 280px;
+    }
+
+    .connectz-hud > span {
+      font-size: 0.52rem;
+      padding: 8px 10px;
+      letter-spacing: 0.18em;
     }
   }
 </style>
