@@ -1,0 +1,490 @@
+---
+---
+
+<section id="operator" class="ascii-head-section">
+  <div class="section">
+    <p class="section-label">PRESENCE</p>
+    <h2 class="section-title">OPERATOR_INTERFACE</h2>
+
+    <div class="ascii-stage" id="asciiHeadStage">
+      <div class="ascii-glow" id="asciiHeadGlow" aria-hidden="true"></div>
+      <div class="ascii-output" id="asciiHeadOutput" aria-hidden="true"></div>
+
+      <div class="ascii-hud" aria-hidden="true">
+        <span class="hud-tl"><span class="hud-dot"></span>UPLINK</span>
+        <span class="hud-tr">VISUAL · BIOMETRIC</span>
+        <span class="hud-bl">TRACK :: CURSOR</span>
+        <span class="hud-br">SIGNAL · LIVE</span>
+      </div>
+    </div>
+
+    <p class="ascii-caption">
+      // pointer-driven · ascii rasterized · live render
+    </p>
+  </div>
+</section>
+
+<script>
+  import * as THREE from "three";
+  import { AsciiEffect } from "three/examples/jsm/effects/AsciiEffect.js";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const section = document.getElementById("operator") as HTMLElement | null;
+    const stage = document.getElementById("asciiHeadStage") as HTMLElement | null;
+    const output = document.getElementById("asciiHeadOutput") as HTMLElement | null;
+    const glowEl = document.getElementById("asciiHeadGlow") as HTMLElement | null;
+    if (!section || !stage || !output || !glowEl) return;
+
+    let scene: THREE.Scene | null = null;
+    let camera: THREE.PerspectiveCamera | null = null;
+    let renderer: THREE.WebGLRenderer | null = null;
+    let effect: AsciiEffect | null = null;
+    let headGroup: THREE.Group | null = null;
+    let eyeLPivot: THREE.Group | null = null;
+    let eyeRPivot: THREE.Group | null = null;
+
+    let running = false;
+    let rafId: number | null = null;
+    let initialized = false;
+
+    // Cursor state
+    let mouseNX = 0;
+    let mouseNY = 0;
+    let mouseRawX = 0;
+    let mouseRawY = 0;
+    let glowX = 0;
+    let glowY = 0;
+    let glowInit = false;
+
+    const HEAD_LERP = 0.06;
+    const EYE_LERP = 0.2;
+    const GLOW_LERP = 0.035;
+
+    function buildHead(): {
+      group: THREE.Group;
+      eyeL: THREE.Group;
+      eyeR: THREE.Group;
+    } {
+      const group = new THREE.Group();
+      const skinMat = new THREE.MeshPhongMaterial({
+        color: 0xffffff,
+        shininess: 18,
+        flatShading: false,
+      });
+      const eyeWhiteMat = new THREE.MeshPhongMaterial({
+        color: 0xffffff,
+        shininess: 60,
+      });
+      const pupilMat = new THREE.MeshPhongMaterial({
+        color: 0x111111,
+        shininess: 5,
+      });
+
+      // Skull
+      const skull = new THREE.Mesh(
+        new THREE.SphereGeometry(1, 48, 48),
+        skinMat,
+      );
+      skull.scale.set(1, 1.15, 1);
+      group.add(skull);
+
+      // Jaw / chin
+      const jaw = new THREE.Mesh(
+        new THREE.SphereGeometry(0.78, 36, 36),
+        skinMat,
+      );
+      jaw.scale.set(0.9, 0.7, 0.9);
+      jaw.position.set(0, -0.7, 0.05);
+      group.add(jaw);
+
+      // Brow ridge
+      const brow = new THREE.Mesh(
+        new THREE.BoxGeometry(1.05, 0.12, 0.32),
+        skinMat,
+      );
+      brow.position.set(0, 0.28, 0.78);
+      group.add(brow);
+
+      // Nose
+      const nose = new THREE.Mesh(
+        new THREE.ConeGeometry(0.12, 0.42, 16),
+        skinMat,
+      );
+      nose.rotation.x = Math.PI / 2;
+      nose.position.set(0, -0.05, 1.02);
+      group.add(nose);
+      const nostrils = new THREE.Mesh(
+        new THREE.SphereGeometry(0.13, 16, 16),
+        skinMat,
+      );
+      nostrils.scale.set(1.2, 0.6, 0.7);
+      nostrils.position.set(0, -0.22, 1.0);
+      group.add(nostrils);
+
+      // Cheekbones (subtle)
+      for (const sx of [-1, 1]) {
+        const cheek = new THREE.Mesh(
+          new THREE.SphereGeometry(0.32, 24, 24),
+          skinMat,
+        );
+        cheek.position.set(sx * 0.5, -0.18, 0.78);
+        cheek.scale.set(1, 0.7, 0.6);
+        group.add(cheek);
+      }
+
+      // Lips (a flattened ellipsoid)
+      const lips = new THREE.Mesh(
+        new THREE.SphereGeometry(0.22, 24, 24),
+        skinMat,
+      );
+      lips.scale.set(1.4, 0.35, 0.6);
+      lips.position.set(0, -0.55, 0.92);
+      group.add(lips);
+
+      // Ears
+      for (const sx of [-1, 1]) {
+        const ear = new THREE.Mesh(
+          new THREE.SphereGeometry(0.18, 20, 20),
+          skinMat,
+        );
+        ear.scale.set(0.4, 1, 0.7);
+        ear.position.set(sx * 1.0, -0.05, 0);
+        group.add(ear);
+      }
+
+      // Hair cap (a slightly larger sphere chunk on top)
+      const hair = new THREE.Mesh(
+        new THREE.SphereGeometry(1.04, 36, 36, 0, Math.PI * 2, 0, Math.PI * 0.55),
+        skinMat,
+      );
+      hair.scale.set(1, 1.15, 1);
+      hair.position.set(0, 0.05, 0);
+      group.add(hair);
+
+      // Eye pivots (so eyes can rotate independently)
+      const eyeL = new THREE.Group();
+      const eyeR = new THREE.Group();
+      eyeL.position.set(-0.34, 0.12, 0.82);
+      eyeR.position.set(0.34, 0.12, 0.82);
+
+      const eyeballGeo = new THREE.SphereGeometry(0.16, 24, 24);
+      const eyeballL = new THREE.Mesh(eyeballGeo, eyeWhiteMat);
+      const eyeballR = new THREE.Mesh(eyeballGeo, eyeWhiteMat);
+      eyeL.add(eyeballL);
+      eyeR.add(eyeballR);
+
+      // Pupils — placed forward of the eyeball so rotation of the pivot
+      // sweeps them across the visible face like a gaze.
+      const pupilGeo = new THREE.SphereGeometry(0.07, 16, 16);
+      const pupilL = new THREE.Mesh(pupilGeo, pupilMat);
+      const pupilR = new THREE.Mesh(pupilGeo, pupilMat);
+      pupilL.position.set(0, 0, 0.12);
+      pupilR.position.set(0, 0, 0.12);
+      eyeL.add(pupilL);
+      eyeR.add(pupilR);
+
+      group.add(eyeL);
+      group.add(eyeR);
+
+      // Neck
+      const neck = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.45, 0.55, 0.7, 24),
+        skinMat,
+      );
+      neck.position.set(0, -1.35, -0.05);
+      group.add(neck);
+
+      // Shoulder hint (top of torso, just to anchor the neck visually)
+      const shoulders = new THREE.Mesh(
+        new THREE.SphereGeometry(0.9, 24, 24),
+        skinMat,
+      );
+      shoulders.scale.set(1.6, 0.45, 0.9);
+      shoulders.position.set(0, -1.85, -0.1);
+      group.add(shoulders);
+
+      return { group, eyeL, eyeR };
+    }
+
+    function getStageSize() {
+      const r = stage!.getBoundingClientRect();
+      return {
+        w: Math.max(1, Math.floor(r.width)),
+        h: Math.max(1, Math.floor(r.height)),
+      };
+    }
+
+    function init() {
+      if (initialized) return;
+      const { w, h } = getStageSize();
+      if (w === 0 || h === 0) return;
+
+      scene = new THREE.Scene();
+      scene.background = null;
+
+      camera = new THREE.PerspectiveCamera(35, w / h, 0.1, 100);
+      camera.position.set(0, 0.15, 4.6);
+      camera.lookAt(0, -0.1, 0);
+
+      // Lights
+      const ambient = new THREE.AmbientLight(0xffffff, 0.35);
+      scene.add(ambient);
+      const key = new THREE.DirectionalLight(0xffffff, 1.1);
+      key.position.set(-2.5, 3, 4);
+      scene.add(key);
+      const rim = new THREE.DirectionalLight(0xffffff, 0.35);
+      rim.position.set(3, 1.5, -2);
+      scene.add(rim);
+
+      // Head
+      const built = buildHead();
+      headGroup = built.group;
+      eyeLPivot = built.eyeL;
+      eyeRPivot = built.eyeR;
+      scene.add(headGroup);
+
+      // Renderer + ASCII effect
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(w, h);
+      renderer.setClearColor(0x000000, 0);
+
+      effect = new AsciiEffect(renderer, " .:-+*=%@#", { invert: true });
+      effect.setSize(w, h);
+      const eDom = effect.domElement as HTMLElement;
+      eDom.style.color = "var(--col-neon-green)";
+      eDom.style.backgroundColor = "transparent";
+      eDom.style.position = "absolute";
+      eDom.style.inset = "0";
+      eDom.style.display = "flex";
+      eDom.style.alignItems = "center";
+      eDom.style.justifyContent = "center";
+      output!.appendChild(eDom);
+
+      initialized = true;
+    }
+
+    function resize() {
+      if (!initialized || !renderer || !effect || !camera) return;
+      const { w, h } = getStageSize();
+      if (w === 0 || h === 0) return;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+      effect.setSize(w, h);
+    }
+
+    function tick() {
+      if (!running || !effect || !scene || !camera) return;
+
+      if (headGroup) {
+        const yawTarget = mouseNX * 0.55;
+        const pitchTarget = -mouseNY * 0.3;
+        headGroup.rotation.y += (yawTarget - headGroup.rotation.y) * HEAD_LERP;
+        headGroup.rotation.x += (pitchTarget - headGroup.rotation.x) * HEAD_LERP;
+      }
+
+      const eyeYawTarget = mouseNX * 0.6;
+      const eyePitchTarget = -mouseNY * 0.4;
+      for (const pivot of [eyeLPivot, eyeRPivot]) {
+        if (!pivot) continue;
+        pivot.rotation.y += (eyeYawTarget - pivot.rotation.y) * EYE_LERP;
+        pivot.rotation.x += (eyePitchTarget - pivot.rotation.x) * EYE_LERP;
+      }
+
+      if (glowInit) {
+        glowX += (mouseRawX - glowX) * GLOW_LERP;
+        glowY += (mouseRawY - glowY) * GLOW_LERP;
+        glowEl!.style.transform = `translate(-50%, -50%) translate3d(${glowX}px, ${glowY}px, 0)`;
+      }
+
+      effect.render(scene, camera);
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function start() {
+      if (running) return;
+      init();
+      if (!initialized) return;
+      running = true;
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function stop() {
+      running = false;
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    }
+
+    // Cursor wiring (pointer covers both mouse & touch)
+    stage.addEventListener("pointermove", (e) => {
+      const r = stage.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+      mouseRawX = x;
+      mouseRawY = y;
+      mouseNX = (x / r.width) * 2 - 1;
+      mouseNY = -((y / r.height) * 2 - 1);
+      if (!glowInit) {
+        glowX = mouseRawX;
+        glowY = mouseRawY;
+        glowInit = true;
+      }
+    });
+
+    stage.addEventListener("pointerleave", () => {
+      // Drift back to center when the cursor leaves the stage
+      mouseNX = 0;
+      mouseNY = 0;
+    });
+
+    // Resize
+    const ro = new ResizeObserver(() => resize());
+    ro.observe(stage);
+    window.addEventListener("resize", resize);
+
+    // Visibility-based start/stop
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) start();
+          else stop();
+        }
+      },
+      { threshold: 0.05 },
+    );
+    io.observe(section);
+  });
+</script>
+
+<style>
+  .ascii-head-section {
+    background: var(--col-bg);
+    position: relative;
+  }
+
+  .ascii-stage {
+    position: relative;
+    width: 100%;
+    height: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid var(--col-border);
+    background: radial-gradient(
+        ellipse at center,
+        #0c0c14 0%,
+        #06060a 75%
+      ),
+      #06060a;
+    cursor: crosshair;
+  }
+
+  .ascii-glow {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgba(0, 212, 255, 0.55) 0%,
+      rgba(0, 212, 255, 0.18) 35%,
+      transparent 70%
+    );
+    filter: blur(60px);
+    pointer-events: none;
+    transform: translate(-50%, -50%) translate3d(50%, 50%, 0);
+    will-change: transform;
+    z-index: 0;
+    mix-blend-mode: screen;
+  }
+
+  .ascii-output {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    color: var(--col-neon-green);
+    text-shadow: 0 0 6px var(--col-glow-green);
+    line-height: 1;
+    letter-spacing: 0;
+    pointer-events: none;
+  }
+
+  /* AsciiEffect injects a <table> — keep monospace tight */
+  .ascii-output :global(table) {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+  .ascii-output :global(td) {
+    padding: 0;
+    line-height: 1;
+  }
+
+  .ascii-hud {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: var(--col-neon-green);
+    text-transform: uppercase;
+  }
+  .ascii-hud > span {
+    position: absolute;
+    padding: 6px 10px;
+    background: rgba(10, 10, 12, 0.6);
+    border: 1px solid var(--col-border);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hud-tl { top: 12px; left: 12px; }
+  .hud-tr { top: 12px; right: 12px; color: var(--col-neon-cyan); }
+  .hud-bl { bottom: 12px; left: 12px; color: var(--col-text-dim); }
+  .hud-br { bottom: 12px; right: 12px; color: var(--col-neon-amber); }
+
+  .hud-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--col-neon-green);
+    box-shadow: 0 0 6px var(--col-neon-green);
+    animation: ascii-hud-pulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes ascii-hud-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .ascii-caption {
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    color: var(--col-text-dim);
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 768px) {
+    .ascii-stage { height: 400px; }
+    .ascii-glow { width: 340px; height: 340px; }
+    .ascii-hud { font-size: 0.55rem; letter-spacing: 0.18em; }
+  }
+
+  @media (max-width: 480px) {
+    .ascii-stage { height: 320px; }
+    .ascii-hud .hud-bl, .ascii-hud .hud-br { display: none; }
+  }
+</style>
