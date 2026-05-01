@@ -44,9 +44,9 @@
     let glowY = 0;
     let glowInit = false;
 
-    const HEAD_LERP = 0.06;
-    const EYE_LERP = 0.2;
-    const GLOW_LERP = 0.035;
+    const HEAD_LERP = 0.025;
+    const EYE_LERP = 0.08;
+    const GLOW_LERP = 0.009;
 
     function buildHead(): {
       group: THREE.Group;
@@ -331,10 +331,37 @@
       if (glowInit) {
         glowX += (mouseRawX - glowX) * GLOW_LERP;
         glowY += (mouseRawY - glowY) * GLOW_LERP;
-        glowEl!.style.transform = `translate(-50%, -50%) translate3d(${glowX}px, ${glowY}px, 0)`;
+
+        // Proximity: 1 when the spotlight has caught up to the cursor, 0 when
+        // it's still well behind. Drives size + brightness so the light
+        // pulses up as it reaches the mouse and dims/shrinks while chasing.
+        const dx = mouseRawX - glowX;
+        const dy = mouseRawY - glowY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const MAX_CHASE = 420;
+        const proximity = Math.max(0, 1 - dist / MAX_CHASE);
+        const eased = proximity * proximity * (3 - 2 * proximity);
+
+        const SPOT_R_MIN = 40;
+        const SPOT_R_MAX = 320;
+        const GLOW_SCALE_MIN = 0.22;
+        const GLOW_SCALE_MAX = 1;
+        const GLOW_OPACITY_MIN = 0.1;
+        const GLOW_OPACITY_MAX = 0.65;
+
+        const spotR =
+          SPOT_R_MIN + (SPOT_R_MAX - SPOT_R_MIN) * eased;
+        const glowScale =
+          GLOW_SCALE_MIN + (GLOW_SCALE_MAX - GLOW_SCALE_MIN) * eased;
+        const glowOpacity =
+          GLOW_OPACITY_MIN + (GLOW_OPACITY_MAX - GLOW_OPACITY_MIN) * eased;
+
+        glowEl!.style.transform = `translate(-50%, -50%) translate3d(${glowX}px, ${glowY}px, 0) scale(${glowScale})`;
+        glowEl!.style.opacity = `${glowOpacity}`;
         // The spotlight that "reveals" the head sits on the lagging light
         output!.style.setProperty("--mask-x", `${glowX}px`);
         output!.style.setProperty("--mask-y", `${glowY}px`);
+        output!.style.setProperty("--mask-r", `${spotR}px`);
       }
 
       effect.render(scene, camera);
@@ -410,16 +437,16 @@
     position: absolute;
     left: 0;
     top: 0;
-    width: 520px;
-    height: 520px;
+    width: 360px;
+    height: 360px;
     border-radius: 50%;
     background: radial-gradient(
       circle,
-      rgba(255, 32, 64, 0.65) 0%,
-      rgba(255, 32, 64, 0.22) 38%,
-      transparent 70%
+      rgba(255, 32, 64, 0.42) 0%,
+      rgba(255, 32, 64, 0.12) 38%,
+      transparent 68%
     );
-    filter: blur(60px);
+    filter: blur(55px);
     pointer-events: none;
     transform: translate(-50%, -50%) translate3d(50%, 50%, 0);
     will-change: transform;
@@ -430,6 +457,7 @@
   .ascii-output {
     --mask-x: -9999px;
     --mask-y: -9999px;
+    --mask-r: 80px;
     position: absolute;
     inset: 0;
     z-index: 1;
@@ -442,20 +470,20 @@
     line-height: 1;
     letter-spacing: 0;
     pointer-events: none;
-    /* Spotlight reveal — the lagging light is the only thing that exposes
-       the ASCII characters; outside its radius the head dissolves into the
-       super-dark background. */
+    /* Spotlight reveal — radius and brightness are driven by JS based on how
+       close the lagging light is to the cursor. While it's still chasing, the
+       spotlight stays small and dim; it blooms to full size when it catches up. */
     -webkit-mask-image: radial-gradient(
-      circle 280px at var(--mask-x) var(--mask-y),
-      black 25%,
-      rgba(0, 0, 0, 0.55) 55%,
-      transparent 75%
+      circle var(--mask-r) at var(--mask-x) var(--mask-y),
+      rgba(0, 0, 0, 0.85) 18%,
+      rgba(0, 0, 0, 0.4) 50%,
+      transparent 68%
     );
     mask-image: radial-gradient(
-      circle 280px at var(--mask-x) var(--mask-y),
-      black 25%,
-      rgba(0, 0, 0, 0.55) 55%,
-      transparent 75%
+      circle var(--mask-r) at var(--mask-x) var(--mask-y),
+      rgba(0, 0, 0, 0.85) 18%,
+      rgba(0, 0, 0, 0.4) 50%,
+      transparent 68%
     );
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
@@ -472,6 +500,6 @@
   }
 
   @media (max-width: 768px) {
-    .ascii-glow { width: 340px; height: 340px; }
+    .ascii-glow { width: 240px; height: 240px; }
   }
 </style>
