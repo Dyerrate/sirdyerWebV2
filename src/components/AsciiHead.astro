@@ -1,39 +1,20 @@
 ---
 ---
 
-<section id="operator" class="ascii-head-section">
-  <div class="section">
-    <p class="section-label">PRESENCE</p>
-    <h2 class="section-title">OPERATOR_INTERFACE</h2>
-
-    <div class="ascii-stage" id="asciiHeadStage">
-      <div class="ascii-glow" id="asciiHeadGlow" aria-hidden="true"></div>
-      <div class="ascii-output" id="asciiHeadOutput" aria-hidden="true"></div>
-
-      <div class="ascii-hud" aria-hidden="true">
-        <span class="hud-tl"><span class="hud-dot"></span>UPLINK</span>
-        <span class="hud-tr">VISUAL · BIOMETRIC</span>
-        <span class="hud-bl">TRACK :: CURSOR</span>
-        <span class="hud-br">SIGNAL · LIVE</span>
-      </div>
-    </div>
-
-    <p class="ascii-caption">
-      // pointer-driven · ascii rasterized · live render
-    </p>
-  </div>
-</section>
+<div class="ascii-stage" id="asciiHeadStage" aria-hidden="true">
+  <div class="ascii-glow" id="asciiHeadGlow"></div>
+  <div class="ascii-output" id="asciiHeadOutput"></div>
+</div>
 
 <script>
   import * as THREE from "three";
   import { AsciiEffect } from "three/examples/jsm/effects/AsciiEffect.js";
 
   document.addEventListener("DOMContentLoaded", () => {
-    const section = document.getElementById("operator") as HTMLElement | null;
     const stage = document.getElementById("asciiHeadStage") as HTMLElement | null;
     const output = document.getElementById("asciiHeadOutput") as HTMLElement | null;
     const glowEl = document.getElementById("asciiHeadGlow") as HTMLElement | null;
-    if (!section || !stage || !output || !glowEl) return;
+    if (!stage || !output || !glowEl) return;
 
     let scene: THREE.Scene | null = null;
     let camera: THREE.PerspectiveCamera | null = null;
@@ -42,6 +23,13 @@
     let headGroup: THREE.Group | null = null;
     let eyeLPivot: THREE.Group | null = null;
     let eyeRPivot: THREE.Group | null = null;
+    let upperLipMesh: THREE.Mesh | null = null;
+    let lowerLipMesh: THREE.Mesh | null = null;
+    let mouthCavityMesh: THREE.Mesh | null = null;
+    // Baseline mouth positions (captured from buildHead so tick() can offset them)
+    const UPPER_LIP_Y = -0.5;
+    const LOWER_LIP_Y = -0.62;
+    const CAVITY_Y = -0.56;
 
     let running = false;
     let rafId: number | null = null;
@@ -56,14 +44,17 @@
     let glowY = 0;
     let glowInit = false;
 
-    const HEAD_LERP = 0.06;
-    const EYE_LERP = 0.2;
-    const GLOW_LERP = 0.035;
+    const HEAD_LERP = 0.025;
+    const EYE_LERP = 0.08;
+    const GLOW_LERP = 0.009;
 
     function buildHead(): {
       group: THREE.Group;
       eyeL: THREE.Group;
       eyeR: THREE.Group;
+      upperLip: THREE.Mesh;
+      lowerLip: THREE.Mesh;
+      mouthCavity: THREE.Mesh;
     } {
       const group = new THREE.Group();
       const skinMat = new THREE.MeshPhongMaterial({
@@ -78,6 +69,10 @@
       const pupilMat = new THREE.MeshPhongMaterial({
         color: 0x111111,
         shininess: 5,
+      });
+      const mouthMat = new THREE.MeshPhongMaterial({
+        color: 0x040404,
+        shininess: 1,
       });
 
       // Skull
@@ -132,14 +127,31 @@
         group.add(cheek);
       }
 
-      // Lips (a flattened ellipsoid)
-      const lips = new THREE.Mesh(
+      // Mouth — split into upper/lower lip with a dark cavity between so it
+      // can open and close. Y positions are baselines; tick() animates them.
+      const upperLip = new THREE.Mesh(
         new THREE.SphereGeometry(0.22, 24, 24),
         skinMat,
       );
-      lips.scale.set(1.4, 0.35, 0.6);
-      lips.position.set(0, -0.55, 0.92);
-      group.add(lips);
+      upperLip.scale.set(1.4, 0.16, 0.6);
+      upperLip.position.set(0, -0.5, 0.92);
+      group.add(upperLip);
+
+      const lowerLip = new THREE.Mesh(
+        new THREE.SphereGeometry(0.22, 24, 24),
+        skinMat,
+      );
+      lowerLip.scale.set(1.3, 0.18, 0.58);
+      lowerLip.position.set(0, -0.62, 0.91);
+      group.add(lowerLip);
+
+      const mouthCavity = new THREE.Mesh(
+        new THREE.SphereGeometry(0.2, 20, 20),
+        mouthMat,
+      );
+      mouthCavity.scale.set(1.15, 0.06, 0.5);
+      mouthCavity.position.set(0, -0.56, 0.84);
+      group.add(mouthCavity);
 
       // Ears
       for (const sx of [-1, 1]) {
@@ -203,7 +215,7 @@
       shoulders.position.set(0, -1.85, -0.1);
       group.add(shoulders);
 
-      return { group, eyeL, eyeR };
+      return { group, eyeL, eyeR, upperLip, lowerLip, mouthCavity };
     }
 
     function getStageSize() {
@@ -222,8 +234,8 @@
       scene = new THREE.Scene();
       scene.background = null;
 
-      camera = new THREE.PerspectiveCamera(35, w / h, 0.1, 100);
-      camera.position.set(0, 0.15, 4.6);
+      camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 100);
+      camera.position.set(0, 0.1, 3.9);
       camera.lookAt(0, -0.1, 0);
 
       // Lights
@@ -241,6 +253,9 @@
       headGroup = built.group;
       eyeLPivot = built.eyeL;
       eyeRPivot = built.eyeR;
+      upperLipMesh = built.upperLip;
+      lowerLipMesh = built.lowerLip;
+      mouthCavityMesh = built.mouthCavity;
       scene.add(headGroup);
 
       // Renderer + ASCII effect
@@ -252,7 +267,7 @@
       effect = new AsciiEffect(renderer, " .:-+*=%@#", { invert: true });
       effect.setSize(w, h);
       const eDom = effect.domElement as HTMLElement;
-      eDom.style.color = "var(--col-neon-green)";
+      eDom.style.color = "var(--col-neon-red)";
       eDom.style.backgroundColor = "transparent";
       eDom.style.position = "absolute";
       eDom.style.inset = "0";
@@ -260,6 +275,10 @@
       eDom.style.alignItems = "center";
       eDom.style.justifyContent = "center";
       output!.appendChild(eDom);
+
+      // Initialize the spotlight mask off-stage so head starts hidden
+      output!.style.setProperty("--mask-x", `-9999px`);
+      output!.style.setProperty("--mask-y", `-9999px`);
 
       initialized = true;
     }
@@ -292,10 +311,57 @@
         pivot.rotation.x += (eyePitchTarget - pivot.rotation.x) * EYE_LERP;
       }
 
+      // Mouth animation — layered sine waves give a quiet "muttering"
+      // baseline with occasional wider opens, like the head is whispering.
+      const tSec = performance.now() * 0.001;
+      const breathe = Math.sin(tSec * 1.7) * 0.5 + 0.5;          // 0..1, slow
+      const chatter = Math.sin(tSec * 6.3) * 0.5 + 0.5;          // 0..1, fast
+      const burst = Math.max(0, Math.sin(tSec * 0.45) - 0.25);   // 0..0.75, sparse
+      const open = Math.min(
+        1,
+        breathe * 0.25 + chatter * burst * 1.6,
+      );
+      if (upperLipMesh) upperLipMesh.position.y = UPPER_LIP_Y + open * 0.04;
+      if (lowerLipMesh) lowerLipMesh.position.y = LOWER_LIP_Y - open * 0.18;
+      if (mouthCavityMesh) {
+        mouthCavityMesh.scale.y = 0.06 + open * 1.4;
+        mouthCavityMesh.position.y = CAVITY_Y - open * 0.07;
+      }
+
       if (glowInit) {
         glowX += (mouseRawX - glowX) * GLOW_LERP;
         glowY += (mouseRawY - glowY) * GLOW_LERP;
-        glowEl!.style.transform = `translate(-50%, -50%) translate3d(${glowX}px, ${glowY}px, 0)`;
+
+        // Proximity: 1 when the spotlight has caught up to the cursor, 0 when
+        // it's still well behind. Drives size + brightness so the light
+        // pulses up as it reaches the mouse and dims/shrinks while chasing.
+        const dx = mouseRawX - glowX;
+        const dy = mouseRawY - glowY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const MAX_CHASE = 420;
+        const proximity = Math.max(0, 1 - dist / MAX_CHASE);
+        const eased = proximity * proximity * (3 - 2 * proximity);
+
+        const SPOT_R_MIN = 40;
+        const SPOT_R_MAX = 320;
+        const GLOW_SCALE_MIN = 0.22;
+        const GLOW_SCALE_MAX = 1;
+        const GLOW_OPACITY_MIN = 0.1;
+        const GLOW_OPACITY_MAX = 0.65;
+
+        const spotR =
+          SPOT_R_MIN + (SPOT_R_MAX - SPOT_R_MIN) * eased;
+        const glowScale =
+          GLOW_SCALE_MIN + (GLOW_SCALE_MAX - GLOW_SCALE_MIN) * eased;
+        const glowOpacity =
+          GLOW_OPACITY_MIN + (GLOW_OPACITY_MAX - GLOW_OPACITY_MIN) * eased;
+
+        glowEl!.style.transform = `translate(-50%, -50%) translate3d(${glowX}px, ${glowY}px, 0) scale(${glowScale})`;
+        glowEl!.style.opacity = `${glowOpacity}`;
+        // The spotlight that "reveals" the head sits on the lagging light
+        output!.style.setProperty("--mask-x", `${glowX}px`);
+        output!.style.setProperty("--mask-y", `${glowY}px`);
+        output!.style.setProperty("--mask-r", `${spotR}px`);
       }
 
       effect.render(scene, camera);
@@ -318,15 +384,17 @@
       }
     }
 
-    // Cursor wiring (pointer covers both mouse & touch)
-    stage.addEventListener("pointermove", (e) => {
+    // Cursor wiring — track globally across the whole window so the head
+    // is "constantly tracking" even when the cursor is far from the stage.
+    // Head rotation is normalized against the viewport; mask + glow positions
+    // are kept in stage-local coords so the spotlight reveal aligns with
+    // the rendered ASCII grid.
+    window.addEventListener("pointermove", (e) => {
+      mouseNX = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseNY = -((e.clientY / window.innerHeight) * 2 - 1);
       const r = stage.getBoundingClientRect();
-      const x = e.clientX - r.left;
-      const y = e.clientY - r.top;
-      mouseRawX = x;
-      mouseRawY = y;
-      mouseNX = (x / r.width) * 2 - 1;
-      mouseNY = -((y / r.height) * 2 - 1);
+      mouseRawX = e.clientX - r.left;
+      mouseRawY = e.clientY - r.top;
       if (!glowInit) {
         glowX = mouseRawX;
         glowY = mouseRawY;
@@ -334,69 +402,51 @@
       }
     });
 
-    stage.addEventListener("pointerleave", () => {
-      // Drift back to center when the cursor leaves the stage
-      mouseNX = 0;
-      mouseNY = 0;
-    });
-
     // Resize
     const ro = new ResizeObserver(() => resize());
     ro.observe(stage);
     window.addEventListener("resize", resize);
 
-    // Visibility-based start/stop
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) start();
-          else stop();
-        }
-      },
-      { threshold: 0.05 },
-    );
-    io.observe(section);
+    // Pause when the tab is hidden (RAF naturally pauses too, but this stops
+    // the loop variable from growing arbitrarily on resume).
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) stop();
+      else start();
+    });
+
+    // Run continuously — head is now a global background, not a section.
+    start();
   });
 </script>
 
 <style>
-  .ascii-head-section {
-    background: var(--col-bg);
-    position: relative;
-  }
-
   .ascii-stage {
-    position: relative;
-    width: 100%;
-    height: 560px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
     overflow: hidden;
-    border: 1px solid var(--col-border);
-    background: radial-gradient(
-        ellipse at center,
-        #0c0c14 0%,
-        #06060a 75%
-      ),
-      #06060a;
-    cursor: crosshair;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 50% 35%, #0a0205 0%, #030001 70%),
+      #020001;
   }
 
   .ascii-glow {
     position: absolute;
     left: 0;
     top: 0;
-    width: 520px;
-    height: 520px;
+    width: 360px;
+    height: 360px;
     border-radius: 50%;
     background: radial-gradient(
       circle,
-      rgba(0, 212, 255, 0.55) 0%,
-      rgba(0, 212, 255, 0.18) 35%,
-      transparent 70%
+      rgba(255, 32, 64, 0.42) 0%,
+      rgba(255, 32, 64, 0.12) 38%,
+      transparent 68%
     );
-    filter: blur(60px);
+    filter: blur(55px);
     pointer-events: none;
     transform: translate(-50%, -50%) translate3d(50%, 50%, 0);
     will-change: transform;
@@ -405,6 +455,9 @@
   }
 
   .ascii-output {
+    --mask-x: -9999px;
+    --mask-y: -9999px;
+    --mask-r: 80px;
     position: absolute;
     inset: 0;
     z-index: 1;
@@ -412,11 +465,28 @@
     align-items: center;
     justify-content: center;
     font-family: var(--font-mono);
-    color: var(--col-neon-green);
-    text-shadow: 0 0 6px var(--col-glow-green);
+    color: var(--col-neon-red);
+    text-shadow: 0 0 8px var(--col-glow-red);
     line-height: 1;
     letter-spacing: 0;
     pointer-events: none;
+    /* Spotlight reveal — radius and brightness are driven by JS based on how
+       close the lagging light is to the cursor. While it's still chasing, the
+       spotlight stays small and dim; it blooms to full size when it catches up. */
+    -webkit-mask-image: radial-gradient(
+      circle var(--mask-r) at var(--mask-x) var(--mask-y),
+      rgba(0, 0, 0, 0.85) 18%,
+      rgba(0, 0, 0, 0.4) 50%,
+      transparent 68%
+    );
+    mask-image: radial-gradient(
+      circle var(--mask-r) at var(--mask-x) var(--mask-y),
+      rgba(0, 0, 0, 0.85) 18%,
+      rgba(0, 0, 0, 0.4) 50%,
+      transparent 68%
+    );
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
   }
 
   /* AsciiEffect injects a <table> — keep monospace tight */
@@ -429,62 +499,7 @@
     line-height: 1;
   }
 
-  .ascii-hud {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 2;
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    letter-spacing: 0.25em;
-    color: var(--col-neon-green);
-    text-transform: uppercase;
-  }
-  .ascii-hud > span {
-    position: absolute;
-    padding: 6px 10px;
-    background: rgba(10, 10, 12, 0.6);
-    border: 1px solid var(--col-border);
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .hud-tl { top: 12px; left: 12px; }
-  .hud-tr { top: 12px; right: 12px; color: var(--col-neon-cyan); }
-  .hud-bl { bottom: 12px; left: 12px; color: var(--col-text-dim); }
-  .hud-br { bottom: 12px; right: 12px; color: var(--col-neon-amber); }
-
-  .hud-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--col-neon-green);
-    box-shadow: 0 0 6px var(--col-neon-green);
-    animation: ascii-hud-pulse 1.6s ease-in-out infinite;
-  }
-
-  @keyframes ascii-hud-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  .ascii-caption {
-    margin-top: 14px;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.18em;
-    color: var(--col-text-dim);
-    text-transform: uppercase;
-  }
-
   @media (max-width: 768px) {
-    .ascii-stage { height: 400px; }
-    .ascii-glow { width: 340px; height: 340px; }
-    .ascii-hud { font-size: 0.55rem; letter-spacing: 0.18em; }
-  }
-
-  @media (max-width: 480px) {
-    .ascii-stage { height: 320px; }
-    .ascii-hud .hud-bl, .ascii-hud .hud-br { display: none; }
+    .ascii-glow { width: 240px; height: 240px; }
   }
 </style>

@@ -1,4 +1,6 @@
 ---
+import AsciiHead from "../components/AsciiHead.astro";
+
 interface Props {
   title?: string;
 }
@@ -28,22 +30,26 @@ const { title = "Samuel Dyer — Creative Technologist" } = Astro.props;
     />
   </head>
   <body>
+    <!-- Site-wide ASCII head, fixed behind all content -->
+    <AsciiHead />
     <!-- Scanline overlay -->
     <div class="scanlines" aria-hidden="true"></div>
     <!-- Vignette -->
     <div class="vignette" aria-hidden="true"></div>
 
-    <slot />
+    <div class="site-stack">
+      <slot />
+    </div>
   </body>
 </html>
 
 <style is:global>
   /* ── CSS Custom Properties ── */
   :root {
-    --col-bg: #0a0a0c;
-    --col-surface: #111116;
-    --col-surface-alt: #18181f;
-    --col-border: #2a2a35;
+    --col-bg: #050204;
+    --col-surface: #0a0306;
+    --col-surface-alt: #110509;
+    --col-border: #261018;
     --col-text: #c8c8d0;
     --col-text-dim: #6a6a78;
     --col-heading: #e8e8f0;
@@ -53,6 +59,7 @@ const { title = "Samuel Dyer — Creative Technologist" } = Astro.props;
     --col-neon-red: #ff2040;
     --col-glow-green: rgba(0, 255, 65, 0.15);
     --col-glow-cyan: rgba(0, 212, 255, 0.15);
+    --col-glow-red: rgba(255, 32, 64, 0.22);
     --font-mono: "Share Tech Mono", "Courier New", monospace;
     --font-display: "Orbitron", sans-serif;
     --font-body: "Rajdhani", sans-serif;
@@ -82,6 +89,12 @@ const { title = "Samuel Dyer — Creative Technologist" } = Astro.props;
     background: var(--col-bg);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Slot content sits above the fixed AsciiHead background */
+  .site-stack {
+    position: relative;
+    z-index: 1;
   }
 
   /* ── Scanlines ── */
