@@ -389,7 +389,11 @@
     // Head rotation is normalized against the viewport; mask + glow positions
     // are kept in stage-local coords so the spotlight reveal aligns with
     // the rendered ASCII grid.
-    window.addEventListener("pointermove", (e) => {
+    //
+    // We bind the same handler to pointermove/pointerdown/pointerup so a
+    // mobile tap (which fires only down+up, no move) updates the tracking
+    // target. The point persists as "last known" until the next event.
+    function updatePointer(e: PointerEvent) {
       mouseNX = (e.clientX / window.innerWidth) * 2 - 1;
       mouseNY = -((e.clientY / window.innerHeight) * 2 - 1);
       const r = stage.getBoundingClientRect();
@@ -400,7 +404,11 @@
         glowY = mouseRawY;
         glowInit = true;
       }
-    });
+    }
+    const pointerOpts: AddEventListenerOptions = { passive: true };
+    window.addEventListener("pointermove", updatePointer, pointerOpts);
+    window.addEventListener("pointerdown", updatePointer, pointerOpts);
+    window.addEventListener("pointerup", updatePointer, pointerOpts);
 
     // Resize
     const ro = new ResizeObserver(() => resize());
