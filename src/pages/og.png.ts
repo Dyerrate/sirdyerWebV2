@@ -2,14 +2,16 @@ import type { APIRoute } from "astro";
 import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
 export const prerender = true;
 
 // ── Fonts (loaded once at build time) ────────────────────────────────────
-const fontDir = fileURLToPath(new URL("../assets/fonts/", import.meta.url));
-const orbitron = await readFile(`${fontDir}Orbitron-Black.ttf`);
-const shareTechMono = await readFile(`${fontDir}ShareTechMono-Regular.ttf`);
+// Read from public/fonts/ via process.cwd() so the path resolves correctly
+// in both local dev and Vercel's prerender build environment.
+const fontDir = join(process.cwd(), "public", "fonts");
+const orbitron = await readFile(join(fontDir, "Orbitron-Black.ttf"));
+const shareTechMono = await readFile(join(fontDir, "ShareTechMono-Regular.ttf"));
 
 // ── Tiny JSX helper so we don't need a JSX runtime ───────────────────────
 type Node = string | number | { type: string; props: Record<string, unknown> };
