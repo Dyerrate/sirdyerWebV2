@@ -342,8 +342,8 @@
         const proximity = Math.max(0, 1 - dist / MAX_CHASE);
         const eased = proximity * proximity * (3 - 2 * proximity);
 
-        const SPOT_R_MIN = 40;
-        const SPOT_R_MAX = 320;
+        const SPOT_R_MIN = 70;
+        const SPOT_R_MAX = 580;
         const GLOW_SCALE_MIN = 0.22;
         const GLOW_SCALE_MAX = 1;
         const GLOW_OPACITY_MIN = 0.1;
@@ -389,7 +389,11 @@
     // Head rotation is normalized against the viewport; mask + glow positions
     // are kept in stage-local coords so the spotlight reveal aligns with
     // the rendered ASCII grid.
-    window.addEventListener("pointermove", (e) => {
+    //
+    // We bind the same handler to pointermove/pointerdown/pointerup so a
+    // mobile tap (which fires only down+up, no move) updates the tracking
+    // target. The point persists as "last known" until the next event.
+    function updatePointer(e: PointerEvent) {
       mouseNX = (e.clientX / window.innerWidth) * 2 - 1;
       mouseNY = -((e.clientY / window.innerHeight) * 2 - 1);
       const r = stage.getBoundingClientRect();
@@ -400,7 +404,11 @@
         glowY = mouseRawY;
         glowInit = true;
       }
-    });
+    }
+    const pointerOpts: AddEventListenerOptions = { passive: true };
+    window.addEventListener("pointermove", updatePointer, pointerOpts);
+    window.addEventListener("pointerdown", updatePointer, pointerOpts);
+    window.addEventListener("pointerup", updatePointer, pointerOpts);
 
     // Resize
     const ro = new ResizeObserver(() => resize());
@@ -437,8 +445,8 @@
     position: absolute;
     left: 0;
     top: 0;
-    width: 360px;
-    height: 360px;
+    width: 640px;
+    height: 640px;
     border-radius: 50%;
     background: radial-gradient(
       circle,
@@ -500,6 +508,6 @@
   }
 
   @media (max-width: 768px) {
-    .ascii-glow { width: 240px; height: 240px; }
+    .ascii-glow { width: 440px; height: 440px; }
   }
 </style>

@@ -3,9 +3,21 @@ import AsciiHead from "../components/AsciiHead.astro";
 
 interface Props {
   title?: string;
+  description?: string;
+  ogImage?: string;
 }
 
-const { title = "Samuel Dyer — Creative Technologist" } = Astro.props;
+const SITE_URL = "https://sirdyer.com";
+const DEFAULT_DESCRIPTION =
+  "Samuel Dyer — engineer, creative technologist, and AR/VR visionary. Crafting immersive futures at the intersection of code and imagination.";
+
+const {
+  title = "Samuel Dyer — Creative Technologist",
+  description = DEFAULT_DESCRIPTION,
+  ogImage = `${SITE_URL}/og.png`,
+} = Astro.props;
+
+const canonicalUrl = new URL(Astro.url.pathname, SITE_URL).href;
 ---
 
 <!doctype html>
@@ -15,11 +27,37 @@ const { title = "Samuel Dyer — Creative Technologist" } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <meta
-      name="description"
-      content="Samuel Dyer — engineer, creative technologist, and AR/VR visionary. Crafting immersive futures at the intersection of code and imagination."
-    />
+    <meta name="description" content={description} />
     <title>{title}</title>
+
+    <!-- Canonical + theme -->
+    <link rel="canonical" href={canonicalUrl} />
+    <meta name="theme-color" content="#020001" />
+
+    <!-- Apple Home Screen / Messages -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Samuel Dyer" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Open Graph (Apple Messages, Slack, LinkedIn, FB, Discord, etc.) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Samuel Dyer" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Samuel Dyer — ASCII portrait on a dark crimson backdrop" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content="Samuel Dyer — ASCII portrait on a dark crimson backdrop" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
