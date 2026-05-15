@@ -84,10 +84,10 @@
               <span class="fs-meta">drwxr-xr-x · 2.4GB · ACTIVE</span>
               <span class="fs-arrow">→</span>
             </button>
-            <button class="fs-item fs-folder" data-target="autoCar">
-              <span class="fs-icon">📁</span>
-              <span class="fs-name">AutoCar_VR/</span>
-              <span class="fs-meta">drwxr-xr-x · 1.8GB · IN_DEV</span>
+            <button class="fs-item fs-folder fs-folder--sakura" data-target="digitalArt">
+              <span class="fs-icon">🌸</span>
+              <span class="fs-name sakura-name">Digital_Art/</span>
+              <span class="fs-meta">drwxr-xr-x · 72MB · CREATIVE</span>
               <span class="fs-arrow">→</span>
             </button>
             <button class="fs-item fs-folder fs-folder--matrix" data-target="matrix">
@@ -212,68 +212,69 @@
           </div>
         </div>
 
-        <!-- AutoCar VR view -->
-        <div class="fs-view hidden" id="viewAutoCar">
+        <!-- Digital Art directory view (cherry-blossom theme) -->
+        <div class="fs-view hidden" id="viewDigitalArt">
           <div class="terminal-output">
-            <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects/AutoCar_VR</span>$ cat README.md</p>
+            <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects/Digital_Art</span>$ ls -la</p>
+            <p class="cmd-output">total 1 entry</p>
+            <p class="cmd-output dim">drwxr-xr-x  3 sdyer  staff   96 Mar 24 09:41 .</p>
+            <p class="cmd-output dim">drwxr-xr-x  6 sdyer  staff  192 Mar 24 09:41 ..</p>
           </div>
 
-          <div class="project-detail">
-            <div class="detail-header">
+          <div class="fs-listing">
+            <button class="fs-item fs-folder fs-folder--sakura" data-target="flowers">
+              <span class="fs-icon">🌸</span>
+              <span class="fs-name sakura-name">flowers/</span>
+              <span class="fs-meta">drwxr-xr-x · 18MB · BLOOMING</span>
+              <span class="fs-arrow">→</span>
+            </button>
+          </div>
+
+          <div class="terminal-output">
+            <p class="cmd-hint sakura-hint">// petals.exec — enter the bloom ▸</p>
+          </div>
+        </div>
+
+        <!-- Flowers detail view: intro video + ASCII Osaka flower -->
+        <div class="fs-view hidden" id="viewFlowers">
+          <div class="terminal-output">
+            <p class="cmd-line"><span class="prompt-green">sdyer@creative-lab</span>:<span class="prompt-cyan">~/projects/Digital_Art/flowers</span>$ ./bloom --osaka</p>
+          </div>
+
+          <div class="flowers-detail">
+            <div class="flowers-header">
               <div class="detail-title-row">
-                <h3 class="detail-title">AUTOCAR</h3>
-                <span class="detail-status status--dev">◌ IN DEVELOPMENT</span>
+                <h3 class="detail-title sakura-title">FLOWERS // 大阪</h3>
+                <span class="detail-status status--sakura">✿ BLOOMING</span>
               </div>
-              <p class="detail-subtitle">Virtual Reality — DIY Car Repair System</p>
+              <p class="detail-subtitle sakura-subtitle">Sakura-coded studies — petal geometry, ASCII bloom, motion sketches.</p>
             </div>
 
-            <div class="detail-body">
-              <div class="detail-section">
-                <p class="detail-label">// OVERVIEW</p>
-                <p class="detail-text">
-                  A VR application that places users inside a fully interactive virtual garage where they can learn hands-on car repair techniques. Step-by-step guided workflows walk users through real maintenance procedures — from brake pad replacements to engine diagnostics — using spatial hand tracking and 3D-annotated vehicle models.
-                </p>
+            <div class="flowers-video-wrap">
+              <video
+                class="flowers-video"
+                src="/flowerIntroVideo.mp4"
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                poster=""
+              ></video>
+              <div class="flowers-video-hud">
+                <span class="hud-tag">VID · INTRO_REEL</span>
+                <span class="hud-tag hud-tag--right">PRESS ▶ TO BLOOM</span>
               </div>
-
-              <div class="detail-section">
-                <p class="detail-label">// KEY FEATURES</p>
-                <div class="detail-list">
-                  <span class="detail-list-item">▹ Interactive 3D vehicle models with exploded views</span>
-                  <span class="detail-list-item">▹ Step-by-step guided repair workflows</span>
-                  <span class="detail-list-item">▹ Hand-tracking tool interactions</span>
-                  <span class="detail-list-item">▹ Real-time diagnostic overlay system</span>
-                  <span class="detail-list-item">▹ Progress tracking & skill assessment</span>
-                </div>
-              </div>
-
-              <div class="detail-section">
-                <p class="detail-label">// TECH STACK</p>
-                <div class="detail-tags">
-                  <span class="d-tag">Unity</span>
-                  <span class="d-tag">XR Interaction Toolkit</span>
-                  <span class="d-tag">Blender</span>
-                  <span class="d-tag">Hand Tracking</span>
-                  <span class="d-tag">C#</span>
-                  <span class="d-tag">Meta Quest</span>
-                </div>
-              </div>
-
-              <div class="detail-actions">
-                <span class="detail-link detail-link--disabled">
-                  <span class="link-icon">◈</span> Coming Soon — In Development
-                </span>
-              </div>
+              <button class="flowers-play-btn" id="flowersPlayBtn" aria-label="Play / pause intro reel">
+                <span class="play-icon">▶</span>
+              </button>
             </div>
 
-            <!-- File tree decoration -->
-            <div class="detail-files">
-              <p class="files-header">$ tree -L 1</p>
-              <p class="file-entry">├── Assets/</p>
-              <p class="file-entry">├── Scripts/</p>
-              <p class="file-entry">├── Models/</p>
-              <p class="file-entry">├── README.md</p>
-              <p class="file-entry">└── ProjectSettings/</p>
-              <p class="file-count">3 directories, 2 files</p>
+            <div class="flowers-ascii-section">
+              <p class="detail-label sakura-label">// ASCII_BLOOM — osaka_flower.exec</p>
+              <div class="flower-ascii-stage" id="flowerAsciiStage">
+                <div class="flower-ascii-output" id="flowerAsciiOutput"></div>
+              </div>
+              <p class="flowers-credits">// procedural sakura → three.js → AsciiEffect</p>
             </div>
           </div>
         </div>
@@ -417,7 +418,8 @@
     const viewRoot = document.getElementById("viewRoot") as HTMLElement;
     const viewSubSpatial = document.getElementById("viewSubSpatial") as HTMLElement;
     const viewSubSpatialReadme = document.getElementById("viewSubSpatialReadme") as HTMLElement;
-    const viewAutoCar = document.getElementById("viewAutoCar") as HTMLElement;
+    const viewDigitalArt = document.getElementById("viewDigitalArt") as HTMLElement;
+    const viewFlowers = document.getElementById("viewFlowers") as HTMLElement;
     const backBtn = document.getElementById("backBtn") as HTMLElement;
     const terminalTitle = document.getElementById("terminalTitle") as HTMLElement;
     const terminalPath = document.getElementById("terminalPath") as HTMLElement;
@@ -454,6 +456,8 @@
     }
 
     // ── Boot sequence ──
+    // Snap-renders the directory listing instantly (no per-character typing)
+    // so the section opens within ~300 ms of scrolling into view.
     async function runBoot() {
       loadingEl.classList.add("hidden");
       bootEl.classList.remove("hidden");
@@ -464,30 +468,30 @@
         { text: "total 5 entries", color: "dim" },
         { text: "drwxr-xr-x  4 sdyer  staff  128 Mar 24 09:41 .", color: "dim" },
         { text: "drwxr-xr-x  8 sdyer  staff  256 Mar 24 09:41 ..", color: "dim" },
-        { text: "drwxr-xr-x  6 sdyer  staff  2.4G  ACTIVE  Sub_Spatial_Studio/", color: "cyan" },
-        { text: "drwxr-xr-x  5 sdyer  staff  1.8G  IN_DEV  AutoCar_VR/", color: "cyan" },
-        { text: "drwxr-xr-x  3 sdyer  staff  4.2M  DEMO    matrix/", color: "matrix" },
-        { text: "drwxr-xr-x  3 sdyer  staff  2.1M  DEMO    pretext_matrix/", color: "pretext" },
-        { text: "-r?x--x---  ? sdyer  staff  ?.??G  ??????  AI_Agriculture.exe", color: "red" },
+        { text: "drwxr-xr-x  6 sdyer  staff  2.4G  ACTIVE   Sub_Spatial_Studio/", color: "cyan" },
+        { text: "drwxr-xr-x  4 sdyer  staff   72M  CREATIVE Digital_Art/", color: "sakura" },
+        { text: "drwxr-xr-x  3 sdyer  staff  4.2M  DEMO     matrix/", color: "matrix" },
+        { text: "drwxr-xr-x  3 sdyer  staff  2.1M  DEMO     pretext_matrix/", color: "pretext" },
+        { text: "-r?x--x---  ? sdyer  staff  ?.??G  ??????   AI_Agriculture.exe", color: "red" },
       ];
 
+      // Render all lines instantly — no typewriter delay
       for (const line of lines) {
         const p = document.createElement("p");
         p.className = `boot-line boot-line--${line.color}`;
+        p.textContent = line.text;
         bootEl.appendChild(p);
-        await typeText(p, line.text, CHAR_SPEED);
-        await sleep(LINE_PAUSE);
       }
 
-      await sleep(400);
+      await sleep(140);
 
       // Transition: fade boot out, show main content
-      bootEl.style.transition = "opacity 0.4s ease";
+      bootEl.style.transition = "opacity 0.2s ease";
       bootEl.style.opacity = "0";
-      await sleep(400);
+      await sleep(200);
       bootEl.classList.add("hidden");
       mainEl.classList.remove("hidden");
-      mainEl.style.animation = "fadeSlideIn 0.4s ease forwards";
+      mainEl.style.animation = "fadeSlideIn 0.3s ease forwards";
     }
 
     // ── IntersectionObserver: trigger boot on scroll ──
@@ -514,7 +518,8 @@
       root: viewRoot,
       subSpatial: viewSubSpatial,
       subSpatialReadme: viewSubSpatialReadme,
-      autoCar: viewAutoCar,
+      digitalArt: viewDigitalArt,
+      flowers: viewFlowers,
       matrix: viewMatrix,
       pretextMatrix: viewPretextMatrix,
       connectz: viewConnectz,
@@ -524,7 +529,8 @@
       root: "sdyer@creative-lab:~/projects",
       subSpatial: "sdyer@creative-lab:~/projects/Sub_Spatial_Studio",
       subSpatialReadme: "sdyer@creative-lab:~/projects/Sub_Spatial_Studio/README.md",
-      autoCar: "sdyer@creative-lab:~/projects/AutoCar_VR",
+      digitalArt: "sdyer@creative-lab:~/projects/Digital_Art",
+      flowers: "sdyer@creative-lab:~/projects/Digital_Art/flowers",
       matrix: "sdyer@creative-lab:~/projects/matrix",
       pretextMatrix: "sdyer@creative-lab:~/projects/pretext_matrix",
       connectz: "sdyer@creative-lab:~/projects/Sub_Spatial_Studio/Connectz.md",
@@ -533,7 +539,8 @@
     const pathLabels: Record<string, string> = {
       subSpatial: "Sub_Spatial_Studio",
       subSpatialReadme: "README.md",
-      autoCar: "AutoCar_VR",
+      digitalArt: "Digital_Art",
+      flowers: "flowers",
       matrix: "matrix",
       pretextMatrix: "pretext_matrix",
       connectz: "Connectz.md",
@@ -544,11 +551,15 @@
       root: null,
       subSpatial: "root",
       subSpatialReadme: "subSpatial",
-      autoCar: "root",
+      digitalArt: "root",
+      flowers: "digitalArt",
       matrix: "root",
       pretextMatrix: "root",
       connectz: "subSpatial",
     };
+
+    // Views that should adopt the cherry-blossom theme on the terminal chrome
+    const SAKURA_VIEWS = new Set(["digitalArt", "flowers"]);
 
     let currentKey: string = "root";
 
@@ -563,6 +574,10 @@
     // Connectz control functions (defined later, referenced here)
     let startConnectz: (() => void) | null = null;
     let stopConnectz: (() => void) | null = null;
+
+    // Flower (Digital_Art/flowers) control functions
+    let startFlower: (() => void) | null = null;
+    let stopFlower: (() => void) | null = null;
 
     function buildBreadcrumb(key: string): string {
       // Walk up the parents chain to build the full path
@@ -588,10 +603,17 @@
     }
 
     function showView(key: string) {
-      // Stop matrix, pretext, and connectz animations when leaving views
+      // Stop matrix, pretext, connectz, and flower animations when leaving views
       if (stopMatrix) stopMatrix();
       if (stopPretext) stopPretext();
       if (stopConnectz) stopConnectz();
+      if (stopFlower) stopFlower();
+
+      // Pause the flowers intro video whenever we leave it
+      const flowersVideo = document.querySelector<HTMLVideoElement>(".flowers-video");
+      if (flowersVideo && key !== "flowers") {
+        flowersVideo.pause();
+      }
 
       currentKey = key;
 
@@ -599,6 +621,13 @@
       views[key].classList.remove("hidden");
       views[key].style.animation = "fadeSlideIn 0.35s ease forwards";
       terminalTitle.textContent = titles[key];
+
+      // Cherry-blossom theme toggle for Digital_Art subtree
+      if (SAKURA_VIEWS.has(key)) {
+        terminalWindow.classList.add("theme--sakura");
+      } else {
+        terminalWindow.classList.remove("theme--sakura");
+      }
 
       terminalPath.innerHTML = buildBreadcrumb(key);
       if (key === "root") {
@@ -620,6 +649,11 @@
       // Start connectz globe animation when entering that view
       if (key === "connectz" && startConnectz) {
         setTimeout(startConnectz, 100);
+      }
+
+      // Start the ASCII osaka flower when entering flowers view
+      if (key === "flowers" && startFlower) {
+        setTimeout(startFlower, 100);
       }
 
       // Wire up clickable breadcrumb segments (root + intermediate parents)
@@ -1327,6 +1361,518 @@
       if (connectzAnimationId) {
         cancelAnimationFrame(connectzAnimationId);
         connectzAnimationId = null;
+      }
+    };
+
+    // ── Flowers intro video play/pause toggle ──
+    const flowersPlayBtn = document.getElementById("flowersPlayBtn") as HTMLButtonElement | null;
+    const flowersVideoEl = document.querySelector<HTMLVideoElement>(".flowers-video");
+
+    if (flowersPlayBtn && flowersVideoEl) {
+      const playIcon = flowersPlayBtn.querySelector(".play-icon") as HTMLElement;
+      function syncPlayIcon() {
+        if (!flowersVideoEl) return;
+        playIcon.textContent = flowersVideoEl.paused ? "▶" : "❚❚";
+        flowersPlayBtn?.classList.toggle("is-playing", !flowersVideoEl.paused);
+      }
+      flowersPlayBtn.addEventListener("click", () => {
+        if (flowersVideoEl.paused) {
+          flowersVideoEl.play().catch(() => {/* autoplay blocked, ignore */});
+        } else {
+          flowersVideoEl.pause();
+        }
+      });
+      flowersVideoEl.addEventListener("play", syncPlayIcon);
+      flowersVideoEl.addEventListener("pause", syncPlayIcon);
+      flowersVideoEl.addEventListener("ended", syncPlayIcon);
+      // Click directly on the video toggles too
+      flowersVideoEl.addEventListener("click", () => flowersPlayBtn.click());
+    }
+
+    // ── ASCII Osaka flower (three.js + AsciiEffect) ──
+    // Procedural 5-petal sakura rendered through the same AsciiEffect pipeline
+    // as the site-wide background head. Gently rotates so the petals shimmer.
+    const flowerStage = document.getElementById("flowerAsciiStage") as HTMLElement | null;
+    const flowerOutput = document.getElementById("flowerAsciiOutput") as HTMLElement | null;
+
+    let fRenderer: THREE.WebGLRenderer | null = null;
+    let fScene: THREE.Scene | null = null;
+    let fCamera: THREE.PerspectiveCamera | null = null;
+    let fFlower: THREE.Group | null = null;
+    // The AsciiEffect type isn't exported in a friendly way — use `any` here.
+    let fEffect: any = null;
+    let fRunning = false;
+    let fAnimId: number | null = null;
+    let fT = 0;
+    let fResizeObs: ResizeObserver | null = null;
+
+    // Per-petal state for the bloom → wither → fall → regrow lifecycle.
+    type PetalEntry = {
+      arm: THREE.Group;
+      pivot: THREE.Group;
+      mat: THREE.MeshPhongMaterial;
+      baseColor: THREE.Color;
+      fallStart: number; // staggered fall window within the lifecycle (0..1)
+    };
+    let fPetals: PetalEntry[] = [];
+
+    async function initFlower() {
+      if (!flowerStage || !flowerOutput || fEffect) return false;
+
+      const rect = flowerStage.getBoundingClientRect();
+      // Bail out if the stage hasn't been laid out yet — AsciiEffect crashes
+      // on 0-width canvases inside its internal getImageData() call.
+      if (rect.width < 8 || rect.height < 8) return false;
+
+      // Dynamic import keeps three's AsciiEffect off the home-route critical path
+      const { AsciiEffect } = await import("three/examples/jsm/effects/AsciiEffect.js");
+
+      const w = rect.width;
+      const h = rect.height;
+
+      fScene = new THREE.Scene();
+      fCamera = new THREE.PerspectiveCamera(34, w / h, 0.1, 100);
+      // 3/4 view from above-front, slightly higher than before so the
+      // double-layered petals + raised stigma all read in silhouette.
+      fCamera.position.set(0, 2.85, 4.3);
+      fCamera.lookAt(0, 0.05, 0);
+
+      fRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      fRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      fRenderer.setSize(w, h, false);
+      // Opaque black background so the AsciiEffect reads real dark→light
+      // contrast against the void instead of saturating every pixel.
+      fRenderer.setClearColor(0x000000, 1);
+
+      // Lights — strong overhead key sculpts deep shadows under the cupped
+      // petals + behind the cone stigma. The two pink rims (front and back)
+      // separate the front-row petals from the back-row layer so they don't
+      // merge into one silhouette in ASCII.
+      fScene.add(new THREE.AmbientLight(0xffffff, 0.14));
+      const key = new THREE.DirectionalLight(0xffffff, 1.15);
+      key.position.set(-1.4, 5.0, 2.4);
+      fScene.add(key);
+      const rim = new THREE.DirectionalLight(0xff77b0, 0.55);
+      rim.position.set(3.0, 1.0, -2.4);
+      fScene.add(rim);
+      const backRim = new THREE.DirectionalLight(0xff4080, 0.30);
+      backRim.position.set(0, -0.6, -3.5);
+      fScene.add(backRim);
+      // Faint bottom bounce so the stem + leaves catch some shading
+      const bounce = new THREE.DirectionalLight(0x4a1830, 0.18);
+      bounce.position.set(0, -3.0, 1.5);
+      fScene.add(bounce);
+
+      // Flower group — petals + central core + raised stamens + tiny stem
+      fFlower = new THREE.Group();
+      fScene.add(fFlower);
+
+      // Phong gives nicer specular highlights than Lambert, which translates
+      // to more ASCII contrast. Emissive is kept low so directional light can
+      // actually carve shadows; without that the petals saturate to one tone.
+      const petalMat = new THREE.MeshPhongMaterial({
+        color: 0xffc4dc,
+        emissive: 0x180408,
+        emissiveIntensity: 0.18,
+        specular: 0xff9ec2,
+        shininess: 28,
+      });
+      const coreMat = new THREE.MeshPhongMaterial({
+        color: 0xff80b0,
+        emissive: 0x501020,
+        emissiveIntensity: 0.3,
+        specular: 0xffffff,
+        shininess: 60,
+      });
+      const stamenMat = new THREE.MeshPhongMaterial({
+        color: 0xfff0c0,
+        emissive: 0x884420,
+        emissiveIntensity: 0.25,
+        specular: 0xffffff,
+        shininess: 80,
+      });
+      const filamentMat = new THREE.MeshPhongMaterial({
+        color: 0xff90b8,
+        emissive: 0x200810,
+        emissiveIntensity: 0.15,
+      });
+
+      // ── Two layers of cupped petals — front 5 + back 5 offset 36° ──
+      // Each petal sits inside an "arm" group rotated around Y (for radial
+      // placement) which contains a "pivot" group (for bloom / wither / fall
+      // animation). The pivot owns the petal's meshes so animating the pivot
+      // moves them all as one cohesive petal. Per-petal cloned material lets
+      // opacity + color drift independently during the lifecycle.
+      //
+      // The back row sits slightly behind (lower z-bias) and lower (smaller y
+      // lift) than the front row so its tips peek between the front petals,
+      // giving the bloom unmistakable layered depth in ASCII.
+      const PETAL_COUNT = 5;
+      const frontGeom = new THREE.SphereGeometry(0.58, 24, 16);
+      const backGeom = new THREE.SphereGeometry(0.5, 22, 14);
+      // Darker tint for the back row → reads as "deeper" / shadowed in ASCII
+      const backPetalMat = petalMat.clone();
+      backPetalMat.color.setHex(0xff9ec2);
+      backPetalMat.emissive.setHex(0x100204);
+      backPetalMat.emissiveIntensity = 0.12;
+
+      fPetals = [];
+
+      // Helper to construct one petal (any row)
+      function makePetal(opts: {
+        angleOffset: number;
+        i: number;
+        baseMat: THREE.MeshPhongMaterial;
+        geom: THREE.SphereGeometry;
+        scaleMain: [number, number, number];
+        posMain: [number, number, number];
+        scaleFold: [number, number, number];
+        posFold: [number, number, number];
+        addNotch: boolean;
+        fallStart: number;
+      }): void {
+        const a = (opts.i / PETAL_COUNT) * Math.PI * 2 + opts.angleOffset;
+
+        const arm = new THREE.Group();
+        arm.rotation.y = a;
+        fFlower!.add(arm);
+
+        const pivot = new THREE.Group();
+        arm.add(pivot);
+
+        const mat = opts.baseMat.clone();
+        mat.transparent = true;
+        mat.opacity = 0;
+        const baseColor = mat.color.clone();
+
+        // Main lobe
+        const petal = new THREE.Mesh(opts.geom, mat);
+        petal.scale.set(opts.scaleMain[0], opts.scaleMain[1], opts.scaleMain[2]);
+        petal.position.set(opts.posMain[0], opts.posMain[1], opts.posMain[2]);
+        pivot.add(petal);
+
+        // Inner fold
+        const fold = new THREE.Mesh(opts.geom, mat);
+        fold.scale.set(opts.scaleFold[0], opts.scaleFold[1], opts.scaleFold[2]);
+        fold.position.set(opts.posFold[0], opts.posFold[1], opts.posFold[2]);
+        pivot.add(fold);
+
+        // Tip notch (only on front row — back row stays smooth)
+        if (opts.addNotch) {
+          const notch = new THREE.Mesh(opts.geom, mat);
+          notch.scale.set(0.18, 0.14, 0.18);
+          notch.position.set(0, 0.18, 1.78);
+          pivot.add(notch);
+        }
+
+        fPetals.push({ arm, pivot, mat, baseColor, fallStart: opts.fallStart });
+      }
+
+      // Front row — 5 large, fully lifted petals
+      for (let i = 0; i < PETAL_COUNT; i++) {
+        makePetal({
+          angleOffset: 0,
+          i,
+          baseMat: petalMat,
+          geom: frontGeom,
+          scaleMain: [0.95, 0.22, 1.55],
+          posMain: [0, 0.05, 1.18],
+          scaleFold: [0.42, 0.18, 0.6],
+          posFold: [0, 0.02, 0.5],
+          addNotch: true,
+          fallStart: 0.60 + i * 0.04,
+        });
+      }
+
+      // Back row — 5 smaller petals offset 36°, slightly behind & lower
+      for (let i = 0; i < PETAL_COUNT; i++) {
+        makePetal({
+          angleOffset: Math.PI / PETAL_COUNT, // 36° between front and back
+          i,
+          baseMat: backPetalMat,
+          geom: backGeom,
+          scaleMain: [0.85, 0.20, 1.35],
+          // Slightly lower y, slightly closer to center, recede in z (-)
+          posMain: [0, -0.06, 1.02],
+          scaleFold: [0.36, 0.16, 0.55],
+          posFold: [0, -0.04, 0.42],
+          addNotch: false,
+          // Back petals fall 0.02 later than their angle-paired front petal,
+          // so the cascade reads as "front falls, then the back layer behind
+          // it is revealed briefly, then it falls too".
+          fallStart: 0.62 + i * 0.04,
+        });
+      }
+
+      // ── Central pistil tower ──
+      // A short cone (stigma) crowned with a bright sphere, on top of a wider
+      // disc that hides the petal seams. Much more depth than a single dome:
+      // the cone catches a hard top-light highlight that ASCII renders as a
+      // bright spike, with shadowed sides falling off into the petals.
+      const baseDisc = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.36, 0.4, 0.16, 20),
+        coreMat,
+      );
+      baseDisc.position.y = 0.04;
+      fFlower.add(baseDisc);
+
+      const stigma = new THREE.Mesh(
+        new THREE.ConeGeometry(0.26, 0.55, 18),
+        coreMat,
+      );
+      stigma.position.y = 0.36;
+      fFlower.add(stigma);
+
+      // Bright cap on top of the stigma — the brightest spot in the scene
+      const stigmaCapMat = new THREE.MeshPhongMaterial({
+        color: 0xfff0e0,
+        emissive: 0xffb866,
+        emissiveIntensity: 0.45,
+        specular: 0xffffff,
+        shininess: 100,
+      });
+      const stigmaCap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.10, 14, 10),
+        stigmaCapMat,
+      );
+      stigmaCap.position.y = 0.66;
+      fFlower.add(stigmaCap);
+
+      // ── Calyx (back sepals) ──
+      // Five small darker sepals tucked behind/below the petals — they read
+      // as a dark ring beneath the flower, anchoring it visually.
+      const calyxMat = new THREE.MeshPhongMaterial({
+        color: 0x7a3a52,
+        emissive: 0x0a0306,
+        emissiveIntensity: 0.08,
+        shininess: 6,
+      });
+      const calyxGeom = new THREE.SphereGeometry(0.28, 14, 10);
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2 + Math.PI / 10;
+        const sepal = new THREE.Mesh(calyxGeom, calyxMat);
+        sepal.scale.set(0.42, 0.18, 0.72);
+        sepal.position.set(Math.cos(a) * 0.56, -0.16, Math.sin(a) * 0.56);
+        sepal.rotation.y = -a + Math.PI / 2;
+        sepal.rotation.x = 0.55; // tilt downward + outward
+        fFlower.add(sepal);
+      }
+
+      // Filament + anther stamens rising out of the core like little match-heads.
+      // The vertical filaments + bright anther tips give the flower its
+      // unmistakable "interior" detail when rendered in ASCII.
+      const filamentGeom = new THREE.CylinderGeometry(0.018, 0.024, 0.45, 6);
+      const antherGeom = new THREE.SphereGeometry(0.07, 10, 8);
+      const STAMEN_COUNT = 9;
+      for (let i = 0; i < STAMEN_COUNT; i++) {
+        const a = (i / STAMEN_COUNT) * Math.PI * 2 + 0.18;
+        const r = 0.22 + (i % 2 === 0 ? 0.04 : 0);
+        const fx = Math.cos(a) * r;
+        const fz = Math.sin(a) * r;
+        const tilt = 0.18; // splay outward
+        const filament = new THREE.Mesh(filamentGeom, filamentMat);
+        filament.position.set(fx, 0.34, fz);
+        filament.rotation.z = -Math.cos(a) * tilt;
+        filament.rotation.x = Math.sin(a) * tilt;
+        fFlower.add(filament);
+
+        const anther = new THREE.Mesh(antherGeom, stamenMat);
+        anther.position.set(fx * 1.18, 0.56, fz * 1.18);
+        fFlower.add(anther);
+      }
+
+      // A tapered stem dropping out of the bottom of the frame — anchors
+      // the flower in space and gives the scene a clear "depth axis".
+      const stemGeom = new THREE.CylinderGeometry(0.07, 0.04, 1.7, 10);
+      const stemMat = new THREE.MeshPhongMaterial({
+        color: 0xc05878,
+        emissive: 0x140408,
+        emissiveIntensity: 0.15,
+        shininess: 18,
+      });
+      const stem = new THREE.Mesh(stemGeom, stemMat);
+      stem.position.y = -0.95;
+      fFlower.add(stem);
+
+      // ── Two leaves on the stem ──
+      // Sphere-derived leaf shapes flanking the stem. They use a darker
+      // tint than the stem so the contrast reads as separate forms in ASCII
+      // and they grounded the whole composition as unambiguously a flower.
+      const leafMat = new THREE.MeshPhongMaterial({
+        color: 0xa84e72,
+        emissive: 0x180814,
+        emissiveIntensity: 0.13,
+        shininess: 14,
+      });
+      const leafGeom = new THREE.SphereGeometry(0.42, 16, 12);
+      // Upper-left leaf
+      const leafL = new THREE.Mesh(leafGeom, leafMat);
+      leafL.scale.set(0.95, 0.10, 0.36);
+      leafL.position.set(-0.6, -0.95, 0.05);
+      leafL.rotation.z = 0.55;
+      leafL.rotation.y = -0.45;
+      fFlower.add(leafL);
+      // Lower-right leaf
+      const leafR = new THREE.Mesh(leafGeom, leafMat);
+      leafR.scale.set(0.88, 0.10, 0.32);
+      leafR.position.set(0.5, -1.42, -0.08);
+      leafR.rotation.z = -0.6;
+      leafR.rotation.y = 0.4;
+      fFlower.add(leafR);
+
+      // ── Mount the AsciiEffect renderer into our stage ──
+      // 21-char ramp at resolution 0.20 → enough glyph variety to render the
+      // bloom + cone stigma + back-row petals with distinct shading bands.
+      fEffect = new AsciiEffect(fRenderer, " .'`,:;-=+*o?%xSC#W@$", {
+        invert: true,
+        resolution: 0.20,
+        scale: 1,
+      });
+      fEffect.setSize(w, h);
+      fEffect.domElement.style.color = "#ff6fa3";
+      fEffect.domElement.style.backgroundColor = "transparent";
+      fEffect.domElement.style.fontFamily = "var(--font-mono, monospace)";
+      fEffect.domElement.style.letterSpacing = "0";
+      fEffect.domElement.style.lineHeight = "1";
+      flowerOutput.innerHTML = "";
+      flowerOutput.appendChild(fEffect.domElement);
+
+      // Re-size when the stage resizes (responsive)
+      fResizeObs = new ResizeObserver(() => {
+        if (!flowerStage || !fEffect || !fCamera || !fRenderer) return;
+        const r = flowerStage.getBoundingClientRect();
+        if (r.width < 8 || r.height < 8) return;
+        fCamera.aspect = r.width / r.height;
+        fCamera.updateProjectionMatrix();
+        fRenderer.setSize(r.width, r.height, false);
+        fEffect.setSize(r.width, r.height);
+      });
+      fResizeObs.observe(flowerStage);
+
+      return true;
+    }
+
+    // Smooth Hermite ease between two edges — used to ramp lifecycle phases.
+    function smoothstep(e0: number, e1: number, x: number): number {
+      const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
+      return t * t * (3 - 2 * t);
+    }
+    function lerp(a: number, b: number, t: number): number {
+      return a + (b - a) * t;
+    }
+
+    // ── Lifecycle phase timings (within a single normalized 0..1 cycle) ──
+    //   0.00 – 0.20  BLOOM    petals scale up from bud and unfurl outward
+    //   0.20 – 0.55  OPEN     fully bloomed, gentle sway
+    //   0.55 – 0.65  WITHER   petals droop, color drifts to plum
+    //   0.62 – 0.95  FALL     petals drop off one-by-one (staggered)
+    //   0.95 – 1.00  BARE     bare stem holds before the next bud
+    const LIFECYCLE_PERIOD = 18; // seconds per full cycle
+
+    // Withered tint — desaturated plum
+    const WITHERED_COLOR = new THREE.Color(0x6a2034);
+
+    // Anchor for wall-clock lifecycle progression (so the cycle advances by
+    // real seconds, not frame count — RAF can be throttled when offscreen).
+    let fStartMs = 0;
+
+    function tickFlower() {
+      if (!fRunning) return;
+      if (fStartMs === 0) fStartMs = performance.now();
+      const elapsedSec = (performance.now() - fStartMs) / 1000;
+      // Keep fT in sync for the head-spin animation
+      fT = elapsedSec;
+
+      // ── Single-bloom lifecycle: bloom → wither → fall → regrow ──
+      const tCycle = (elapsedSec % LIFECYCLE_PERIOD) / LIFECYCLE_PERIOD;
+      const bloom = smoothstep(0.02, 0.20, tCycle);
+      const wither = smoothstep(0.55, 0.65, tCycle);
+
+      if (fFlower) {
+        // Slow Y-axis spin around the stem so we always read the petals from
+        // a 3/4 perspective. Wind sway dampens as the flower withers.
+        const swayDamp = 1 - wither * 0.6;
+        fFlower.rotation.y = fT * 0.22;
+        fFlower.rotation.x = Math.sin(fT * 0.55) * 0.06 * swayDamp;
+        fFlower.rotation.z = Math.cos(fT * 0.45) * 0.05 * swayDamp;
+      }
+
+      // ── Per-petal animation ──
+      for (let i = 0; i < fPetals.length; i++) {
+        const p = fPetals[i];
+        const fall = smoothstep(p.fallStart, p.fallStart + 0.10, tCycle);
+        const scale = bloom * (1 - fall);
+        p.pivot.scale.setScalar(scale);
+
+        const openAngle = lerp(-Math.PI / 2, -0.42, bloom);
+        const witherDroop = wither * 0.55;
+        const fallDroop = fall * 1.1;
+        p.pivot.rotation.x = openAngle + witherDroop + fallDroop;
+
+        const swayPhase = i * 1.3;
+        p.pivot.rotation.z =
+          Math.sin(fT * 0.9 + swayPhase) * 0.05 * bloom * (1 - wither);
+
+        p.pivot.position.y = -fall * 1.8;
+        p.pivot.position.z = fall * 0.55;
+
+        p.mat.opacity = Math.max(0, Math.min(1, bloom * (1 - fall * 0.92)));
+
+        const tint = Math.min(1, wither + fall * 0.45);
+        p.mat.color.copy(p.baseColor).lerp(WITHERED_COLOR, tint);
+      }
+
+      if (fEffect && fScene && fCamera && flowerStage) {
+        const r = flowerStage.getBoundingClientRect();
+        if (r.width >= 8 && r.height >= 8) {
+          try {
+            fEffect.render(fScene, fCamera);
+          } catch (err) {
+            // AsciiEffect can throw a transient IndexSizeError if the canvas
+            // is mid-resize. Swallow it — the next RAF tick recovers.
+          }
+        }
+      }
+
+      fAnimId = requestAnimationFrame(tickFlower);
+    }
+
+    // Wait for the stage to actually have layout before bootstrapping the
+    // three.js scene. Without this guard, AsciiEffect crashes on a 0-width
+    // canvas via getImageData().
+    function waitForStageLayout(maxTries = 30): Promise<boolean> {
+      return new Promise((resolve) => {
+        let tries = 0;
+        const check = () => {
+          if (!flowerStage) return resolve(false);
+          const r = flowerStage.getBoundingClientRect();
+          if (r.width >= 8 && r.height >= 8) return resolve(true);
+          if (++tries >= maxTries) return resolve(false);
+          requestAnimationFrame(check);
+        };
+        check();
+      });
+    }
+
+    startFlower = function () {
+      if (fRunning) return;
+      fRunning = true;
+      (async () => {
+        const ready = await waitForStageLayout();
+        if (!ready || !fRunning) return;
+        const ok = await initFlower();
+        if (ok && fRunning) tickFlower();
+      })().catch((err) => {
+        console.warn("[flower] init failed", err);
+      });
+    };
+
+    stopFlower = function () {
+      fRunning = false;
+      fStartMs = 0; // restart the lifecycle from "bud" next time
+      if (fAnimId !== null) {
+        cancelAnimationFrame(fAnimId);
+        fAnimId = null;
       }
     };
   });
@@ -2407,6 +2953,313 @@
     border-bottom-color: rgba(255,32,64,0.3) !important;
   }
 
+  /* ── Sakura folder entry (Digital_Art) ── */
+  .fs-folder--sakura {
+    background: rgba(255, 111, 163, 0.03);
+    border-color: rgba(255, 111, 163, 0.18);
+  }
+
+  .fs-folder--sakura:hover {
+    background: rgba(255, 111, 163, 0.09);
+    border-color: rgba(255, 111, 163, 0.45);
+    box-shadow: 0 0 18px rgba(255, 111, 163, 0.15);
+  }
+
+  .sakura-name {
+    color: #ff7fb1 !important;
+    text-shadow: 0 0 8px rgba(255, 111, 163, 0.45);
+  }
+
+  .fs-folder--sakura:hover .fs-name,
+  .fs-folder--sakura:hover .fs-arrow {
+    color: #ffb4d4;
+    text-shadow: 0 0 10px rgba(255, 111, 163, 0.6);
+  }
+
+  .boot-line--sakura {
+    color: #ff7fb1;
+    text-shadow: 0 0 8px rgba(255, 111, 163, 0.45);
+  }
+
+  .sakura-hint {
+    color: #ff9ec2 !important;
+    text-shadow: 0 0 6px rgba(255, 111, 163, 0.35);
+  }
+
+  /* ── Sakura terminal theme (applied when navigating Digital_Art) ── */
+  .terminal-window.theme--sakura {
+    border-color: rgba(255, 111, 163, 0.35);
+    background: linear-gradient(
+        135deg,
+        #1a0612 0%,
+        #0d030a 55%,
+        #050108 100%
+      );
+    box-shadow: 0 0 36px rgba(255, 64, 128, 0.08),
+      inset 0 0 60px rgba(255, 64, 128, 0.04);
+    transition: border-color 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;
+  }
+
+  .terminal-window.theme--sakura .terminal-titlebar {
+    background: linear-gradient(90deg, #2a0a1a 0%, #170513 100%);
+    border-bottom-color: rgba(255, 111, 163, 0.3);
+  }
+
+  .terminal-window.theme--sakura .titlebar-text {
+    color: #ffb4d4;
+    text-shadow: 0 0 6px rgba(255, 111, 163, 0.35);
+  }
+
+  /* Petal drift overlay inside the terminal */
+  .terminal-window.theme--sakura .terminal-body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle at 12% 22%, rgba(255, 111, 163, 0.10) 0 1px, transparent 1.5px),
+      radial-gradient(circle at 72% 18%, rgba(255, 180, 212, 0.08) 0 1px, transparent 1.5px),
+      radial-gradient(circle at 36% 78%, rgba(255, 111, 163, 0.07) 0 1px, transparent 1.5px),
+      radial-gradient(circle at 88% 64%, rgba(255, 180, 212, 0.08) 0 1px, transparent 1.5px),
+      radial-gradient(circle at 50% 50%, rgba(255, 64, 128, 0.05), transparent 60%);
+    background-size: 280px 280px, 320px 320px, 240px 240px, 360px 360px, 100% 100%;
+    animation: sakura-drift 18s linear infinite;
+    z-index: 0;
+    opacity: 0.85;
+  }
+
+  .terminal-window.theme--sakura .terminal-body > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  @keyframes sakura-drift {
+    0% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0; }
+    100% { background-position: 280px -560px, -320px 640px, 240px -480px, -360px 720px, 0 0; }
+  }
+
+  /* Recolor the prompt + breadcrumb inside the sakura theme */
+  .terminal-window.theme--sakura .prompt-green { color: #ff7fb1; }
+  .terminal-window.theme--sakura .prompt-cyan  { color: #ffb4d4; }
+  .terminal-window.theme--sakura .path-segment { color: #ffb4d4; }
+  .terminal-window.theme--sakura .path-current { color: #fff; text-shadow: 0 0 6px rgba(255, 111, 163, 0.5); }
+  .terminal-window.theme--sakura .path-root:hover,
+  .terminal-window.theme--sakura .path-link:hover {
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 111, 163, 0.55);
+  }
+  .terminal-window.theme--sakura .terminal-path {
+    border-bottom-color: rgba(255, 111, 163, 0.18);
+  }
+  .terminal-window.theme--sakura .cmd-line,
+  .terminal-window.theme--sakura .cmd-output { color: #f3d6e3; }
+  .terminal-window.theme--sakura .cmd-output.dim { color: rgba(255, 180, 212, 0.45); }
+  .terminal-window.theme--sakura .back-btn {
+    color: #ff9ec2;
+    border-color: rgba(255, 111, 163, 0.35);
+    background: rgba(255, 111, 163, 0.06);
+  }
+  .terminal-window.theme--sakura .back-btn:hover {
+    color: #ffd6e6;
+    border-color: rgba(255, 111, 163, 0.7);
+    background: rgba(255, 111, 163, 0.14);
+    box-shadow: 0 0 16px rgba(255, 111, 163, 0.25);
+  }
+
+  /* ── Flowers content area ── */
+  .flowers-detail {
+    border: 1px solid rgba(255, 111, 163, 0.25);
+    background: rgba(20, 6, 14, 0.7);
+    overflow: hidden;
+  }
+
+  .flowers-header {
+    padding: 22px 26px;
+    border-bottom: 1px solid rgba(255, 111, 163, 0.18);
+    background: rgba(255, 111, 163, 0.04);
+  }
+
+  .sakura-title {
+    background: linear-gradient(90deg, #ffd2e4 0%, #ff5e9a 60%, #ffd2e4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 18px rgba(255, 111, 163, 0.35);
+  }
+
+  .sakura-subtitle {
+    color: #ffb4d4;
+  }
+
+  .status--sakura {
+    color: #ff7fb1;
+    text-shadow: 0 0 8px rgba(255, 111, 163, 0.45);
+  }
+
+  .sakura-label {
+    color: #ff9ec2 !important;
+  }
+
+  /* Intro video block */
+  .flowers-video-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #06010a;
+    border-bottom: 1px solid rgba(255, 111, 163, 0.15);
+    overflow: hidden;
+  }
+
+  .flowers-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+  }
+
+  .flowers-video-hud {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 14px;
+    z-index: 2;
+  }
+
+  .hud-tag {
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #ffd2e4;
+    text-shadow: 0 0 6px rgba(255, 111, 163, 0.55);
+    background: rgba(20, 6, 14, 0.6);
+    padding: 4px 8px;
+    border: 1px solid rgba(255, 111, 163, 0.25);
+  }
+
+  .hud-tag--right {
+    align-self: flex-end;
+  }
+
+  .flowers-play-btn {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 111, 163, 0.55);
+    background: rgba(20, 6, 14, 0.55);
+    color: #ffd2e4;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.25s ease, background 0.25s ease, opacity 0.3s ease, box-shadow 0.25s ease;
+    z-index: 3;
+    box-shadow: 0 0 18px rgba(255, 111, 163, 0.2);
+  }
+
+  .flowers-play-btn:hover {
+    transform: translate(-50%, -50%) scale(1.08);
+    background: rgba(255, 111, 163, 0.18);
+    box-shadow: 0 0 28px rgba(255, 111, 163, 0.45);
+  }
+
+  .flowers-play-btn.is-playing {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .flowers-video-wrap:hover .flowers-play-btn.is-playing {
+    opacity: 0.85;
+    pointer-events: auto;
+  }
+
+  /* ASCII osaka flower stage */
+  .flowers-ascii-section {
+    padding: 24px 26px 28px;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(255, 111, 163, 0.06) 0%, transparent 60%),
+      rgba(10, 3, 8, 0.55);
+  }
+
+  .flower-ascii-stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 460px;
+    margin: 18px auto 14px;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(255, 111, 163, 0.1) 0%,
+      rgba(10, 3, 8, 0.85) 70%,
+      #050108 100%
+    );
+    border: 1px solid rgba(255, 111, 163, 0.22);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .flower-ascii-stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(255, 111, 163, 0.04) 3px,
+      rgba(255, 111, 163, 0.04) 4px
+    );
+    mix-blend-mode: screen;
+    z-index: 2;
+  }
+
+  .flower-ascii-output {
+    position: relative;
+    z-index: 1;
+    color: #ff6fa3;
+    font-family: var(--font-mono);
+    line-height: 1;
+    letter-spacing: 0;
+    text-shadow: 0 0 6px rgba(255, 111, 163, 0.45);
+    filter: drop-shadow(0 0 8px rgba(255, 64, 128, 0.18));
+  }
+
+  .flower-ascii-output :global(table) {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+  .flower-ascii-output :global(td) {
+    padding: 0;
+    line-height: 1;
+  }
+  .flower-ascii-output :global(pre) {
+    margin: 0;
+    background: transparent;
+  }
+
+  .flowers-credits {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: rgba(255, 180, 212, 0.55);
+    letter-spacing: 0.18em;
+    text-align: center;
+    margin-top: 8px;
+  }
+
+
   /* ── Mobile ── */
   @media (max-width: 768px) {
     .terminal-body {
@@ -2446,6 +3299,21 @@
       font-size: 0.52rem;
       padding: 8px 10px;
       letter-spacing: 0.18em;
+    }
+
+    .flowers-header,
+    .flowers-ascii-section {
+      padding: 18px 18px;
+    }
+
+    .flower-ascii-stage {
+      max-width: 100%;
+    }
+
+    .flowers-play-btn {
+      width: 52px;
+      height: 52px;
+      font-size: 0.95rem;
     }
   }
 </style>
