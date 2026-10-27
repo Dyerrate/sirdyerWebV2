@@ -1,0 +1,1349 @@
+---
+---
+
+<section id="ascii-lab">
+  <hr class="neon-divider" />
+  <div class="section">
+    <p class="section-label">Render Lab</p>
+    <h2 class="section-title">
+      Ascii <span class="accent-green">Synthesis</span>
+    </h2>
+
+    <p class="lab-intro">
+      A live raster experiment — procedural three.js specimens re-sampled into
+      luminance-mapped ASCII and annotated in real time. Every model below is
+      built from primitives, lit, rendered, and redrawn as text ~60 times a
+      second. Cycle the specimens.
+    </p>
+
+    <div class="lab-frame" id="labFrame">
+      <!-- Targeting corner brackets -->
+      <span class="lab-corner lab-corner--tl" aria-hidden="true"></span>
+      <span class="lab-corner lab-corner--tr" aria-hidden="true"></span>
+      <span class="lab-corner lab-corner--bl" aria-hidden="true"></span>
+      <span class="lab-corner lab-corner--br" aria-hidden="true"></span>
+
+      <!-- Header strip -->
+      <div class="lab-header">
+        <span class="lab-header-left">SYS.RENDER // ASCII_SYNTH v2.1</span>
+        <span class="lab-header-mid" id="labClock">--:--:--</span>
+        <span class="lab-header-right"><span class="lab-rec-dot"></span>LIVE</span>
+      </div>
+
+      <!-- Render stage -->
+      <div class="lab-stage" id="labStage">
+        <div class="lab-output" id="labOutput"></div>
+
+        <!-- Scanline sweep -->
+        <div class="lab-sweep" aria-hidden="true"></div>
+
+        <!-- HUD overlay -->
+        <div class="lab-hud" aria-hidden="true">
+          <!-- Specimen info -->
+          <div class="hud-panel hud-panel--tl">
+            <p class="hud-name" id="labSpecName">SPECIMEN_01 // --------</p>
+            <p class="hud-line" id="labSpecSrc">SRC: --</p>
+            <p class="hud-line" id="labSpecMat">MAT: --</p>
+            <p class="hud-line">CHARSET: " .:-=+*#%@"</p>
+          </div>
+
+          <!-- Telemetry -->
+          <div class="hud-panel hud-panel--tr">
+            <p class="tele-row"><span class="tele-label">FPS</span><span class="tele-value" id="telFps">--</span></p>
+            <p class="tele-row"><span class="tele-label">VTX</span><span class="tele-value" id="telVtx">--</span></p>
+            <p class="tele-row"><span class="tele-label">ROT</span><span class="tele-value" id="telRot">--</span></p>
+            <p class="tele-row"><span class="tele-label" id="telParamLabel">PRM</span><span class="tele-value" id="telParam">--</span></p>
+            <p class="tele-row"><span class="tele-label">T+</span><span class="tele-value" id="telTime">00:00.0</span></p>
+          </div>
+
+          <!-- Scan log -->
+          <div class="hud-panel hud-panel--bl">
+            <p class="hud-log-title">SCAN.LOG</p>
+            <div class="hud-log" id="labLog"></div>
+          </div>
+
+          <!-- Luma ramp legend -->
+          <div class="hud-panel hud-panel--br">
+            <p class="hud-line hud-line--dim">LUMA RAMP</p>
+            <p class="hud-ramp">░ .:-=+*#%@ █</p>
+          </div>
+
+          <!-- Callouts (rebuilt per specimen) -->
+          <div class="hud-callouts" id="labCallouts"></div>
+
+          <!-- Center reticle -->
+          <div class="hud-reticle"></div>
+        </div>
+
+        <!-- Pre-boot splash -->
+        <div class="lab-splash" id="labSplash">
+          <p class="splash-text">AWAITING SIGNAL LOCK<span class="splash-cursor">▌</span></p>
+        </div>
+      </div>
+
+      <!-- Control bar -->
+      <div class="lab-controls">
+        <button class="lab-btn" id="labPrev" aria-label="Previous specimen">◂ PREV</button>
+        <div class="lab-readout">
+          <span class="lab-readout-name" id="labReadoutName">--------</span>
+          <span class="lab-readout-index" id="labReadoutIndex">-- / --</span>
+        </div>
+        <button class="lab-btn" id="labNext" aria-label="Next specimen">NEXT ▸</button>
+      </div>
+    </div>
+
+    <p class="lab-credits">// three.js AsciiEffect × anime.js timelines — procedural specimens, no meshes imported</p>
+  </div>
+</section>
+
+<script>
+  import * as THREE from "three";
+  import { AsciiEffect } from "three/examples/jsm/effects/AsciiEffect.js";
+  import { animate, createTimeline, stagger, engine } from "animejs";
+
+  // The lab manages its own suspend/resume (intersection + visibility), so
+  // anime's built-in document-hidden pause only adds a failure mode: some
+  // embedded webviews never fire the visible-side event, leaving the engine
+  // frozen. rAF gating already stops work in hidden tabs.
+  engine.pauseOnDocumentHidden = false;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const section = document.getElementById("ascii-lab") as HTMLElement | null;
+    const stage = document.getElementById("labStage") as HTMLElement | null;
+    const output = document.getElementById("labOutput") as HTMLElement | null;
+    const splash = document.getElementById("labSplash") as HTMLElement | null;
+    if (!section || !stage || !output || !splash) return;
+
+    // HUD elements
+    const specName = document.getElementById("labSpecName") as HTMLElement;
+    const specSrc = document.getElementById("labSpecSrc") as HTMLElement;
+    const specMat = document.getElementById("labSpecMat") as HTMLElement;
+    const telFps = document.getElementById("telFps") as HTMLElement;
+    const telVtx = document.getElementById("telVtx") as HTMLElement;
+    const telRot = document.getElementById("telRot") as HTMLElement;
+    const telParamLabel = document.getElementById("telParamLabel") as HTMLElement;
+    const telParam = document.getElementById("telParam") as HTMLElement;
+    const telTime = document.getElementById("telTime") as HTMLElement;
+    const logEl = document.getElementById("labLog") as HTMLElement;
+    const calloutsEl = document.getElementById("labCallouts") as HTMLElement;
+    const clockEl = document.getElementById("labClock") as HTMLElement;
+    const readoutName = document.getElementById("labReadoutName") as HTMLElement;
+    const readoutIndex = document.getElementById("labReadoutIndex") as HTMLElement;
+    const prevBtn = document.getElementById("labPrev") as HTMLButtonElement;
+    const nextBtn = document.getElementById("labNext") as HTMLButtonElement;
+
+    // ── Three.js core ──
+    let scene: THREE.Scene | null = null;
+    let camera: THREE.PerspectiveCamera | null = null;
+    let renderer: THREE.WebGLRenderer | null = null;
+    let effect: AsciiEffect | null = null;
+    const camLook = new THREE.Vector3(0, 0, 0);
+
+    let booted = false;
+    let running = false;
+    let rafId: number | null = null;
+    let frames = 0;
+    let sessionStart = 0;
+
+    const UP = new THREE.Vector3(0, 1, 0);
+    const _dir = new THREE.Vector3();
+
+    // Position + orient a unit cylinder (height 1, along Y) between two points.
+    function orientLimb(mesh: THREE.Mesh, a: THREE.Vector3, b: THREE.Vector3) {
+      _dir.subVectors(b, a);
+      const len = Math.max(_dir.length(), 0.0001);
+      mesh.position.copy(a).addScaledVector(_dir, 0.5);
+      mesh.scale.y = len;
+      mesh.quaternion.setFromUnitVectors(UP, _dir.normalize());
+    }
+
+    function countVertices(group: THREE.Group): number {
+      let n = 0;
+      group.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (mesh.isMesh && mesh.geometry) {
+          n += mesh.geometry.attributes.position?.count ?? 0;
+        }
+      });
+      return n;
+    }
+
+    function disposeGroup(group: THREE.Group) {
+      group.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (mesh.isMesh) {
+          mesh.geometry?.dispose();
+          const mat = mesh.material;
+          if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
+          else mat?.dispose();
+        }
+      });
+    }
+
+    // ── Shared materials ──
+    function makeMats() {
+      return {
+        bright: new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 30 }),
+        mid: new THREE.MeshPhongMaterial({ color: 0x9a9a9a, shininess: 8 }),
+        dim: new THREE.MeshPhongMaterial({ color: 0x555555, shininess: 2 }),
+        glow: new THREE.MeshBasicMaterial({ color: 0xffffff }),
+      };
+    }
+
+    // ── Anime-driven pose/param state (one per specimen kind) ──
+    const archerPose = { draw: 0, idle: 0 };
+    const knotPulse = { s: 1, idle: 0 };
+    const moonState = { alt: 2.0 };
+
+    interface Callout {
+      x: string;
+      y: string;
+      side: "left" | "right";
+      text: string;
+    }
+
+    interface MountedExhibit {
+      group: THREE.Group;
+      tick: (t: number) => void;
+      timelines: { pause: () => void; play: () => void; cancel: () => void }[];
+      paramValue: () => string;
+    }
+
+    interface ExhibitDef {
+      id: string;
+      src: string;
+      mat: string;
+      paramLabel: string;
+      camPos: [number, number, number];
+      camLook: [number, number, number];
+      log: string[];
+      callouts: Callout[];
+      create: () => MountedExhibit;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // SPECIMEN 01 — ARCHER_KNIGHT
+    // A longbowman forged from primitives; anime.js timeline loops a
+    // draw → hold → release cycle and fires the arrow downrange.
+    // ══════════════════════════════════════════════════════════════
+    function createArcher(): MountedExhibit {
+      const mats = makeMats();
+      const group = new THREE.Group();
+
+      // Ground disc + mushrooms (a nod to the reference field).
+      // Extra-dark material so the disc doesn't out-shine the figure.
+      const groundMat = new THREE.MeshPhongMaterial({ color: 0x2e2e2e, shininess: 1 });
+      const ground = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.55, 1.55, 0.07, 40),
+        groundMat,
+      );
+      ground.position.y = -1.95;
+      group.add(ground);
+
+      const shroomSpots: [number, number][] = [
+        [0.75, 0.55],
+        [-0.9, 0.35],
+        [-0.35, 0.95],
+        [1.25, -0.45],
+        [-1.2, -0.5],
+      ];
+      for (const [sx, sz] of shroomSpots) {
+        const stem = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.03, 0.05, 0.16, 8),
+          mats.mid,
+        );
+        stem.position.set(sx, -1.83, sz);
+        group.add(stem);
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), mats.bright);
+        cap.scale.set(1, 0.5, 1);
+        cap.position.set(sx, -1.74, sz);
+        group.add(cap);
+      }
+
+      // Torso + armor
+      const torso = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.24, 0.3, 0.95, 18),
+        mats.bright,
+      );
+      torso.position.set(0, -0.05, 0);
+      torso.rotation.z = -0.06;
+      group.add(torso);
+
+      const chest = new THREE.Mesh(new THREE.SphereGeometry(0.27, 18, 16), mats.bright);
+      chest.scale.set(1.1, 1.25, 0.85);
+      chest.position.set(0.04, 0.1, 0);
+      group.add(chest);
+
+      const skirt = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.3, 0.5, 0.45, 18),
+        mats.mid,
+      );
+      skirt.position.set(0, -0.62, 0);
+      group.add(skirt);
+
+      // Head + kettle helm
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 18), mats.mid);
+      head.position.set(0.04, 0.75, 0);
+      group.add(head);
+      const helm = new THREE.Mesh(
+        new THREE.SphereGeometry(0.23, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2),
+        mats.bright,
+      );
+      helm.position.set(0.04, 0.77, 0);
+      group.add(helm);
+      const brim = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.33, 0.35, 0.035, 20),
+        mats.bright,
+      );
+      brim.position.set(0.04, 0.77, 0);
+      group.add(brim);
+
+      // Pauldrons
+      const pauldronL = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 12), mats.bright);
+      pauldronL.position.set(0.1, 0.42, 0.16);
+      group.add(pauldronL);
+      const pauldronR = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 12), mats.bright);
+      pauldronR.position.set(-0.08, 0.44, -0.16);
+      group.add(pauldronR);
+
+      // Legs (wide stance) + feet
+      const legGeo = new THREE.CylinderGeometry(0.1, 0.11, 1, 12);
+      const legF = new THREE.Mesh(legGeo, mats.mid);
+      orientLimb(legF, new THREE.Vector3(0.14, -0.55, 0.12), new THREE.Vector3(0.42, -1.9, 0.14));
+      group.add(legF);
+      const legB = new THREE.Mesh(legGeo.clone(), mats.mid);
+      orientLimb(legB, new THREE.Vector3(-0.14, -0.55, -0.1), new THREE.Vector3(-0.48, -1.9, -0.14));
+      group.add(legB);
+      for (const [fx, fz] of [[0.5, 0.14], [-0.42, -0.14]] as [number, number][]) {
+        const foot = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.11, 0.16), mats.bright);
+        foot.position.set(fx, -1.92, fz);
+        group.add(foot);
+      }
+
+      // Bow arm (static) — shoulder to grip
+      const grip = new THREE.Vector3(1.02, 0.38, 0.12);
+      const bowArm = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 1, 10), mats.mid);
+      orientLimb(bowArm, new THREE.Vector3(0.1, 0.42, 0.14), grip);
+      group.add(bowArm);
+      const bowHand = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), mats.bright);
+      bowHand.position.copy(grip);
+      group.add(bowHand);
+
+      // Bow group — origin at arc center so string math stays local.
+      // Torus arc is rotated so the bow belly faces +X (downrange).
+      const BOW_R = 1.0;
+      const BOW_ARC = Math.PI * 0.72;
+      const bowGroup = new THREE.Group();
+      bowGroup.position.set(grip.x - BOW_R, grip.y, grip.z);
+      group.add(bowGroup);
+
+      const bow = new THREE.Mesh(
+        new THREE.TorusGeometry(BOW_R, 0.05, 10, 60, BOW_ARC),
+        mats.bright,
+      );
+      bow.rotation.z = -BOW_ARC / 2;
+      bowGroup.add(bow);
+
+      const tipX = Math.cos(BOW_ARC / 2) * BOW_R;
+      const tipY = Math.sin(BOW_ARC / 2) * BOW_R;
+      const REST_X = tipX;
+      const MAX_DRAW = 0.95;
+
+      const stringGeo = new THREE.CylinderGeometry(0.018, 0.018, 1, 6);
+      const stringTop = new THREE.Mesh(stringGeo, mats.mid);
+      const stringBot = new THREE.Mesh(stringGeo.clone(), mats.mid);
+      bowGroup.add(stringTop, stringBot);
+
+      // Arrow — nock at group origin, shaft pointing +X
+      const arrowGroup = new THREE.Group();
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.5, 8), mats.mid);
+      shaft.rotation.z = -Math.PI / 2;
+      shaft.position.x = 0.75;
+      arrowGroup.add(shaft);
+      const arrowTip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.15, 8), mats.bright);
+      arrowTip.rotation.z = -Math.PI / 2;
+      arrowTip.position.x = 1.55;
+      arrowGroup.add(arrowTip);
+      const fletchGeo = new THREE.BoxGeometry(0.14, 0.1, 0.012);
+      const fletchA = new THREE.Mesh(fletchGeo, mats.bright);
+      fletchA.position.set(0.1, 0.05, 0);
+      arrowGroup.add(fletchA);
+      const fletchB = new THREE.Mesh(fletchGeo.clone(), mats.bright);
+      fletchB.position.set(0.1, -0.05, 0);
+      arrowGroup.add(fletchB);
+      arrowGroup.position.x = REST_X;
+      bowGroup.add(arrowGroup);
+
+      // Draw arm + hand (dynamic — follows the nock)
+      const drawShoulder = new THREE.Vector3(-0.06, 0.44, -0.14);
+      const drawArm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1, 10), mats.mid);
+      group.add(drawArm);
+      const drawHand = new THREE.Mesh(new THREE.SphereGeometry(0.085, 12, 10), mats.bright);
+      group.add(drawHand);
+
+      // Quiver on the back
+      const quiver = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.7, 10), mats.mid);
+      quiver.position.set(-0.32, 0.15, -0.18);
+      quiver.rotation.z = 0.35;
+      group.add(quiver);
+
+      // Arrow flight state
+      let arrowFlying = false;
+      function fireArrow() {
+        if (arrowFlying) return;
+        arrowFlying = true;
+        animate(arrowGroup.position, {
+          x: arrowGroup.position.x + 7.5,
+          duration: 430,
+          ease: "linear",
+          onComplete: () => {
+            arrowFlying = false;
+          },
+        });
+      }
+
+      // Draw cycle: draw (1.3s) → hold (0.65s) → release + snap → rest
+      const tl = createTimeline({ loop: true })
+        .add(archerPose, { draw: [0, 1], duration: 1300, ease: "inOutQuad" }, 0)
+        .call(() => fireArrow(), 1950)
+        .add(archerPose, { draw: [1, 0], duration: 120, ease: "outExpo" }, 1950)
+        .add(archerPose, { idle: [0, 1], duration: 1400 }, 2070);
+
+      const _tipTop = new THREE.Vector3(tipX, tipY, 0);
+      const _tipBot = new THREE.Vector3(tipX, -tipY, 0);
+      const _nock = new THREE.Vector3();
+      const _nockInArcher = new THREE.Vector3();
+
+      function tick(t: number) {
+        const nockX = REST_X - archerPose.draw * MAX_DRAW;
+        _nock.set(nockX, 0, 0);
+
+        if (!arrowFlying) arrowGroup.position.x = nockX;
+        orientLimb(stringTop, _tipTop, _nock);
+        orientLimb(stringBot, _tipBot, _nock);
+
+        // Bow flexes toward the string as it's drawn
+        bow.scale.x = 1 - archerPose.draw * 0.12;
+
+        // Draw hand rides the nock (bowGroup is axis-aligned in archer space)
+        _nockInArcher.set(bowGroup.position.x + nockX, bowGroup.position.y, bowGroup.position.z);
+        drawHand.position.copy(_nockInArcher);
+        orientLimb(drawArm, drawShoulder, _nockInArcher);
+
+        // Gentle 3/4-view sway + breathing
+        group.rotation.y = -0.55 + Math.sin(t * 0.35) * 0.16;
+        chest.position.y = 0.1 + Math.sin(t * 1.4) * 0.012;
+      }
+
+      return {
+        group,
+        tick,
+        timelines: [tl],
+        paramValue: () => `${Math.round(archerPose.draw * 100)}%`,
+      };
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // SPECIMEN 02 — RESONANT_KNOT
+    // Trefoil torus knot; anime.js timeline drives an elastic pulse
+    // that also bursts the spin rate.
+    // ══════════════════════════════════════════════════════════════
+    function createKnot(): MountedExhibit {
+      const mats = makeMats();
+      const group = new THREE.Group();
+
+      const knot = new THREE.Mesh(
+        new THREE.TorusKnotGeometry(1.02, 0.3, 140, 20),
+        mats.bright,
+      );
+      group.add(knot);
+
+      const halo = new THREE.Mesh(new THREE.TorusGeometry(1.95, 0.02, 8, 64), mats.dim);
+      halo.rotation.x = Math.PI / 2.4;
+      group.add(halo);
+
+      const tl = createTimeline({ loop: true })
+        .add(knotPulse, { s: [1, 1.16], duration: 480, ease: "inOutQuad" }, 0)
+        .add(knotPulse, { s: [1.16, 1], duration: 1100, ease: "outElastic(1, .4)" }, 480)
+        .add(knotPulse, { idle: [0, 1], duration: 1500 }, 1580);
+
+      function tick(t: number) {
+        const burst = 1 + (knotPulse.s - 1) * 5;
+        knot.rotation.x += 0.0035 * burst;
+        knot.rotation.y += 0.0075 * burst;
+        knot.scale.setScalar(knotPulse.s);
+        halo.rotation.z += 0.0022;
+        group.position.y = Math.sin(t * 0.7) * 0.08;
+      }
+
+      return {
+        group,
+        tick,
+        timelines: [tl],
+        paramValue: () => knotPulse.s.toFixed(2),
+      };
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // SPECIMEN 03 — LUNAR_GATE
+    // A basalt gateway under a glowing moon that rises on entry and
+    // orbits, carrying its own point light. Stars twinkle behind.
+    // ══════════════════════════════════════════════════════════════
+    function createGate(): MountedExhibit {
+      const mats = makeMats();
+      const group = new THREE.Group();
+
+      const ground = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.1, 2.1, 0.07, 40),
+        mats.dim,
+      );
+      ground.position.y = -1.62;
+      group.add(ground);
+
+      const step = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.14, 1.0), mats.mid);
+      step.position.y = -1.5;
+      group.add(step);
+
+      for (const px of [-0.85, 0.85]) {
+        const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.7, 0.42), mats.mid);
+        pillar.position.set(px, -0.58, 0);
+        group.add(pillar);
+      }
+
+      const arch = new THREE.Mesh(
+        new THREE.TorusGeometry(0.85, 0.2, 10, 28, Math.PI),
+        mats.mid,
+      );
+      arch.position.y = 0.27;
+      group.add(arch);
+
+      // Moon — always-bright basic material + its own light
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.32, 24, 20), mats.glow);
+      group.add(moon);
+      const moonLight = new THREE.PointLight(0xffffff, 18, 12, 2);
+      moon.add(moonLight);
+
+      // Star shell
+      const starGeo = new THREE.SphereGeometry(1, 6, 5);
+      const stars: THREE.Mesh[] = [];
+      for (let i = 0; i < 30; i++) {
+        const star = new THREE.Mesh(starGeo, mats.bright);
+        const r = 0.02 + Math.random() * 0.028;
+        star.scale.setScalar(r);
+        star.position.set(
+          (Math.random() - 0.5) * 6.4,
+          0.4 + Math.random() * 2.8,
+          -1.4 - Math.random() * 2.4,
+        );
+        stars.push(star);
+        group.add(star);
+      }
+
+      // Moonrise on entry
+      moonState.alt = 0.1;
+      const rise = animate(moonState, {
+        alt: 2.05,
+        duration: 2400,
+        ease: "outCubic",
+      });
+
+      function tick(t: number) {
+        const a = t * 0.22;
+        moon.position.set(Math.sin(a) * 1.5, moonState.alt + Math.sin(t * 0.4) * 0.08, Math.cos(a) * 0.9);
+        group.rotation.y += 0.0012;
+        for (let i = 0; i < stars.length; i++) {
+          const tw = 0.75 + Math.sin(t * 2 + i * 1.7) * 0.25;
+          stars[i].visible = tw > 0.6;
+        }
+      }
+
+      return {
+        group,
+        tick,
+        timelines: [rise],
+        paramValue: () => moonState.alt.toFixed(2),
+      };
+    }
+
+    // ── Exhibit registry ──
+    const exhibits: ExhibitDef[] = [
+      {
+        id: "ARCHER_KNIGHT",
+        src: "SRC: forge://knight_archer.prim",
+        mat: "MAT: PLATE_ARMOR // PHONG",
+        paramLabel: "DRW",
+        camPos: [0.35, 0.3, 6.3],
+        camLook: [0.1, -0.2, 0],
+        log: [
+          "> specimen mounted: ARCHER_KNIGHT",
+          "> skeletal rig: 24 primitives",
+          "> draw cycle: LOOPED [anime.timeline]",
+          "> threat level: ORNAMENTAL",
+        ],
+        callouts: [
+          { x: "57%", y: "16%", side: "right", text: "KETTLE_HELM // STEEL" },
+          { x: "70%", y: "42%", side: "right", text: "LONGBOW // R=1.0" },
+          { x: "33%", y: "84%", side: "left", text: "FLORA // NON-HOSTILE" },
+        ],
+        create: createArcher,
+      },
+      {
+        id: "RESONANT_KNOT",
+        src: "SRC: gen://torus_knot(p2,q3)",
+        mat: "MAT: CHROME // PHONG",
+        paramLabel: "AMP",
+        camPos: [0, 0.2, 5.6],
+        camLook: [0, 0, 0],
+        log: [
+          "> specimen mounted: RESONANT_KNOT",
+          "> topology: trefoil (p2, q3)",
+          "> pulse driver: anime.timeline",
+          "> resonance: STABLE",
+        ],
+        callouts: [
+          { x: "64%", y: "22%", side: "right", text: "TREFOIL PATH // P2 Q3" },
+          { x: "34%", y: "74%", side: "left", text: "TUBE_R 0.30" },
+        ],
+        create: createKnot,
+      },
+      {
+        id: "LUNAR_GATE",
+        src: "SRC: gen://lunar_gate.scene",
+        mat: "MAT: BASALT + EMISSIVE",
+        paramLabel: "ALT",
+        camPos: [0, 0.55, 7.0],
+        camLook: [0, 0.1, 0],
+        log: [
+          "> specimen mounted: LUNAR_GATE",
+          "> celestial body: RISING",
+          "> moonlight: point // 18cd",
+          "> alignment: IMMINENT",
+        ],
+        callouts: [
+          { x: "56%", y: "13%", side: "right", text: "LUNAR BODY // EMISSIVE" },
+          { x: "31%", y: "58%", side: "left", text: "GATEWAY // BASALT" },
+        ],
+        create: createGate,
+      },
+    ];
+
+    let currentIndex = 0;
+    let current: MountedExhibit | null = null;
+    let switching = false;
+    let camAnim: { cancel: () => void } | null = null;
+    let entryAnim: { cancel: () => void } | null = null;
+
+    // ── HUD helpers ──
+    const SCRAMBLE_CHARS = "▓▒░#@%*+=-:.";
+    function scrambleText(el: HTMLElement, text: string, duration = 700) {
+      const proxy = { p: 0 };
+      animate(proxy, {
+        p: 1,
+        duration,
+        ease: "linear",
+        onUpdate: () => {
+          const reveal = Math.floor(proxy.p * text.length);
+          let tail = "";
+          for (let i = reveal; i < text.length; i++) {
+            tail += text[i] === " " ? " " : SCRAMBLE_CHARS[(Math.random() * SCRAMBLE_CHARS.length) | 0];
+          }
+          el.textContent = text.slice(0, reveal) + tail;
+        },
+        onComplete: () => {
+          el.textContent = text;
+        },
+      });
+    }
+
+    function renderLog(lines: string[]) {
+      logEl.innerHTML = "";
+      for (const line of lines) {
+        const p = document.createElement("p");
+        p.className = "hud-log-line";
+        p.textContent = line;
+        p.style.opacity = "0";
+        logEl.appendChild(p);
+      }
+      animate(logEl.querySelectorAll(".hud-log-line"), {
+        opacity: [0, 1],
+        translateX: [-6, 0],
+        duration: 300,
+        delay: stagger(140, { start: 250 }),
+        ease: "outQuad",
+      });
+    }
+
+    function renderCallouts(callouts: Callout[]) {
+      calloutsEl.innerHTML = "";
+      for (const c of callouts) {
+        const el = document.createElement("div");
+        el.className = `hud-callout hud-callout--${c.side}`;
+        el.style.left = c.x;
+        el.style.top = c.y;
+        el.innerHTML =
+          `<span class="callout-dot"></span>` +
+          `<span class="callout-line"></span>` +
+          `<span class="callout-text">${c.text}</span>`;
+        el.style.opacity = "0";
+        calloutsEl.appendChild(el);
+      }
+      // Opacity only — animating transforms here would overwrite the CSS
+      // translateX(-100%) that right-aligns the left-side callouts.
+      animate(calloutsEl.querySelectorAll(".hud-callout"), {
+        opacity: [0, 1],
+        duration: 420,
+        delay: stagger(180, { start: 550 }),
+        ease: "outQuad",
+      });
+    }
+
+    function updateHud(def: ExhibitDef, index: number) {
+      scrambleText(specName, `SPECIMEN_0${index + 1} // ${def.id}`);
+      scrambleText(readoutName, def.id, 500);
+      specSrc.textContent = def.src;
+      specMat.textContent = def.mat;
+      telParamLabel.textContent = def.paramLabel;
+      readoutIndex.textContent = `0${index + 1} / 0${exhibits.length}`;
+      renderLog(def.log);
+      renderCallouts(def.callouts);
+    }
+
+    // ── Specimen mounting ──
+    function mountExhibit(index: number) {
+      if (!scene || !camera) return;
+      const def = exhibits[index];
+
+      if (current) {
+        current.timelines.forEach((tl) => tl.cancel());
+        scene.remove(current.group);
+        disposeGroup(current.group);
+        current = null;
+      }
+      camAnim?.cancel();
+      entryAnim?.cancel();
+
+      current = def.create();
+      scene.add(current.group);
+      telVtx.textContent = countVertices(current.group).toLocaleString("en-US");
+
+      // Spin-scale entry
+      current.group.scale.setScalar(0.001);
+      entryAnim = animate(current.group.scale, {
+        x: 1,
+        y: 1,
+        z: 1,
+        duration: 950,
+        ease: "outElastic(1, .65)",
+      });
+
+      // Glide the camera to this specimen's vantage
+      camLook.set(...def.camLook);
+      camAnim = animate(camera.position, {
+        x: def.camPos[0],
+        y: def.camPos[1],
+        z: def.camPos[2],
+        duration: 850,
+        ease: "inOutQuad",
+      });
+
+      updateHud(def, index);
+    }
+
+    function switchExhibit(dir: number) {
+      if (switching || !booted) return;
+      switching = true;
+      currentIndex = (currentIndex + dir + exhibits.length) % exhibits.length;
+      mountExhibit(currentIndex);
+      setTimeout(() => {
+        switching = false;
+      }, 500);
+    }
+
+    prevBtn.addEventListener("click", () => switchExhibit(-1));
+    nextBtn.addEventListener("click", () => switchExhibit(1));
+
+    // ── Renderer setup ──
+    function getStageSize() {
+      const r = stage!.getBoundingClientRect();
+      return { w: Math.max(1, Math.floor(r.width)), h: Math.max(1, Math.floor(r.height)) };
+    }
+
+    function initThree() {
+      const { w, h } = getStageSize();
+
+      scene = new THREE.Scene();
+      scene.background = null;
+
+      camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
+      camera.position.set(...exhibits[0].camPos);
+      camLook.set(...exhibits[0].camLook);
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.38));
+      const key = new THREE.DirectionalLight(0xffffff, 1.45);
+      key.position.set(-2.5, 3, 4);
+      scene.add(key);
+      const rim = new THREE.DirectionalLight(0xffffff, 0.5);
+      rim.position.set(3, 1.5, -2);
+      scene.add(rim);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(w, h);
+      // Opaque black clear — AsciiEffect maps transparent pixels to the
+      // densest char under invert, which floods the stage with "@".
+      renderer.setClearColor(0x000000, 1);
+
+      // Finer grid than the fullscreen head — the framed stage needs the
+      // extra rows/cols for the detailed specimens to read.
+      effect = new AsciiEffect(renderer, " .:-=+*#%@", { invert: true, resolution: 0.22 });
+      effect.setSize(w, h);
+      const eDom = effect.domElement as HTMLElement;
+      eDom.style.color = "var(--col-neon-green)";
+      eDom.style.backgroundColor = "transparent";
+      eDom.style.position = "absolute";
+      eDom.style.inset = "0";
+      eDom.style.display = "flex";
+      eDom.style.alignItems = "center";
+      eDom.style.justifyContent = "center";
+      output!.appendChild(eDom);
+    }
+
+    function resize() {
+      if (!renderer || !effect || !camera) return;
+      const { w, h } = getStageSize();
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+      effect.setSize(w, h);
+    }
+
+    // ── Frame loop ──
+    function tick(now: number) {
+      if (!running || !effect || !scene || !camera) return;
+      const t = now * 0.001;
+      current?.tick(t);
+      camera.lookAt(camLook);
+      effect.render(scene, camera);
+      frames++;
+      rafId = requestAnimationFrame(tick);
+    }
+
+    // Telemetry refresh (decoupled from RAF)
+    setInterval(() => {
+      if (!running || !current) return;
+      telFps.textContent = (frames * 2).toFixed(0);
+      frames = 0;
+      const deg = ((current.group.rotation.y * 180) / Math.PI) % 360;
+      telRot.textContent = `${deg.toFixed(1)}°`;
+      telParam.textContent = current.paramValue();
+      const elapsed = (performance.now() - sessionStart) / 1000;
+      const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
+      const ss = (elapsed % 60).toFixed(1).padStart(4, "0");
+      telTime.textContent = `${mm}:${ss}`;
+    }, 500);
+
+    // Header clock
+    setInterval(() => {
+      const d = new Date();
+      clockEl.textContent = [d.getHours(), d.getMinutes(), d.getSeconds()]
+        .map((n) => String(n).padStart(2, "0"))
+        .join(":");
+    }, 1000);
+
+    // ── Boot / suspend / resume ──
+    function boot() {
+      if (booted) return;
+      booted = true;
+      sessionStart = performance.now();
+
+      engine.resume();
+      initThree();
+      mountExhibit(0);
+      running = true;
+      rafId = requestAnimationFrame(tick);
+
+      // Splash out, HUD in
+      animate(splash!, {
+        opacity: [1, 0],
+        duration: 450,
+        delay: 350,
+        ease: "outQuad",
+        onComplete: () => splash!.classList.add("hidden"),
+      });
+      animate(section!.querySelectorAll(".hud-panel"), {
+        opacity: [0, 1],
+        translateY: [10, 0],
+        duration: 500,
+        delay: stagger(110, { start: 550 }),
+        ease: "outQuad",
+      });
+    }
+
+    function suspend() {
+      if (!running) return;
+      running = false;
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      current?.timelines.forEach((tl) => tl.pause());
+    }
+
+    function resume() {
+      if (!booted || running) return;
+      running = true;
+      engine.resume();
+      current?.timelines.forEach((tl) => tl.play());
+      rafId = requestAnimationFrame(tick);
+    }
+
+    let inView = false;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          inView = entry.isIntersecting;
+          if (entry.isIntersecting) {
+            if (!booted) boot();
+            else resume();
+          } else {
+            suspend();
+          }
+        }
+      },
+      { threshold: 0.12 },
+    );
+    observer.observe(section);
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) suspend();
+      else if (inView) resume();
+    });
+
+    const ro = new ResizeObserver(() => resize());
+    ro.observe(stage);
+  });
+</script>
+
+<style>
+  .accent-green {
+    color: var(--col-neon-green);
+    text-shadow: 0 0 18px var(--col-glow-green);
+  }
+
+  .lab-intro {
+    max-width: 640px;
+    color: var(--col-text-dim);
+    font-size: 1.05rem;
+    margin-bottom: 40px;
+  }
+
+  /* ── Frame ── */
+  .lab-frame {
+    position: relative;
+    border: 1px solid rgba(0, 255, 65, 0.28);
+    background: #010401;
+    box-shadow:
+      0 0 42px rgba(0, 255, 65, 0.07),
+      inset 0 0 60px rgba(0, 255, 65, 0.03);
+  }
+
+  .lab-corner {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-color: var(--col-neon-green);
+    border-style: solid;
+    border-width: 0;
+    z-index: 4;
+    filter: drop-shadow(0 0 4px rgba(0, 255, 65, 0.6));
+  }
+  .lab-corner--tl { top: -1px; left: -1px; border-top-width: 2px; border-left-width: 2px; }
+  .lab-corner--tr { top: -1px; right: -1px; border-top-width: 2px; border-right-width: 2px; }
+  .lab-corner--bl { bottom: -1px; left: -1px; border-bottom-width: 2px; border-left-width: 2px; }
+  .lab-corner--br { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; }
+
+  /* ── Header strip ── */
+  .lab-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(0, 255, 65, 0.18);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    color: rgba(0, 255, 65, 0.75);
+    text-transform: uppercase;
+  }
+
+  .lab-header-mid {
+    color: var(--col-text-dim);
+  }
+
+  .lab-header-right {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--col-neon-green);
+  }
+
+  .lab-rec-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--col-neon-green);
+    box-shadow: 0 0 6px var(--col-neon-green);
+    animation: lab-blink 1.6s ease-in-out infinite;
+  }
+
+  @keyframes lab-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+  }
+
+  /* ── Stage ── */
+  .lab-stage {
+    position: relative;
+    height: clamp(360px, 58vh, 560px);
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 45%, #041104 0%, #010401 75%);
+  }
+
+  /* Faint measurement grid behind the render */
+  .lab-stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+
+  .lab-output {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    color: var(--col-neon-green);
+    text-shadow: 0 0 6px rgba(0, 255, 65, 0.4);
+    line-height: 1;
+  }
+
+  .lab-output :global(table) {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+  .lab-output :global(td) {
+    padding: 0;
+    line-height: 1;
+  }
+
+  /* Scan sweep */
+  .lab-sweep {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -52px;
+    height: 48px;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(0, 255, 65, 0.05) 55%,
+      rgba(0, 255, 65, 0.14) 96%,
+      rgba(190, 255, 210, 0.4) 100%
+    );
+    animation: lab-sweep 6.5s linear infinite;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  @keyframes lab-sweep {
+    0% { top: -52px; }
+    100% { top: 100%; }
+  }
+
+  /* ── HUD ── */
+  .lab-hud {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    font-family: var(--font-mono);
+  }
+
+  .hud-panel {
+    position: absolute;
+    background: rgba(1, 10, 3, 0.78);
+    border: 1px solid rgba(0, 255, 65, 0.25);
+    padding: 9px 12px;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    line-height: 1.7;
+    opacity: 0;
+    backdrop-filter: blur(2px);
+  }
+
+  .hud-panel--tl { top: 14px; left: 14px; max-width: 46%; }
+  .hud-panel--tr { top: 14px; right: 14px; min-width: 132px; }
+  .hud-panel--bl { bottom: 14px; left: 14px; max-width: 52%; }
+  .hud-panel--br { bottom: 14px; right: 14px; text-align: right; }
+
+  .hud-name {
+    color: var(--col-neon-green);
+    text-shadow: 0 0 8px var(--col-glow-green);
+    margin-bottom: 3px;
+    white-space: nowrap;
+  }
+
+  .hud-line {
+    color: #9ddfae;
+    opacity: 0.85;
+  }
+
+  .hud-line--dim {
+    color: rgba(0, 255, 65, 0.55);
+  }
+
+  .hud-ramp {
+    color: var(--col-neon-green);
+    letter-spacing: 0.14em;
+    text-shadow: 0 0 6px var(--col-glow-green);
+  }
+
+  .tele-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .tele-label {
+    color: rgba(0, 255, 65, 0.55);
+  }
+
+  .tele-value {
+    color: #d2ffdd;
+    text-shadow: 0 0 5px rgba(0, 255, 65, 0.35);
+  }
+
+  .hud-log-title {
+    color: rgba(0, 255, 65, 0.55);
+    margin-bottom: 2px;
+  }
+
+  /* Log lines + callouts are injected at runtime, so they miss Astro's
+     scope hash — style them via :global() under scoped parents. */
+  .hud-log :global(.hud-log-line) {
+    color: #9ddfae;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Callouts with leader lines */
+  .hud-callouts :global(.hud-callout) {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--col-neon-green);
+    text-shadow: 0 0 6px var(--col-glow-green);
+    white-space: nowrap;
+  }
+
+  .hud-callouts :global(.hud-callout--left) {
+    flex-direction: row-reverse;
+    transform: translateX(-100%);
+  }
+
+  .hud-callouts :global(.callout-dot) {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--col-neon-green);
+    box-shadow: 0 0 6px var(--col-neon-green);
+    flex-shrink: 0;
+  }
+
+  .hud-callouts :global(.callout-line) {
+    width: 44px;
+    border-top: 1px dashed rgba(0, 255, 65, 0.55);
+    flex-shrink: 0;
+  }
+
+  .hud-callouts :global(.callout-text) {
+    padding: 2px 7px;
+    border: 1px solid rgba(0, 255, 65, 0.3);
+    background: rgba(1, 10, 3, 0.72);
+  }
+
+  /* Center reticle */
+  .hud-reticle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 22px;
+    height: 22px;
+    transform: translate(-50%, -50%);
+    opacity: 0.3;
+  }
+  .hud-reticle::before,
+  .hud-reticle::after {
+    content: "";
+    position: absolute;
+    background: var(--col-neon-green);
+  }
+  .hud-reticle::before {
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    transform: translateX(-50%);
+  }
+  .hud-reticle::after {
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    transform: translateY(-50%);
+  }
+
+  /* ── Splash ── */
+  .lab-splash {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #010401;
+  }
+
+  .lab-splash.hidden {
+    display: none;
+  }
+
+  .splash-text {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    color: var(--col-neon-green);
+    text-shadow: 0 0 10px var(--col-glow-green);
+  }
+
+  .splash-cursor {
+    animation: lab-blink 1s steps(2) infinite;
+    margin-left: 4px;
+  }
+
+  /* ── Controls ── */
+  .lab-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(0, 255, 65, 0.18);
+  }
+
+  .lab-btn {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--col-neon-green);
+    background: transparent;
+    border: 1px solid rgba(0, 255, 65, 0.4);
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: background 0.2s, text-shadow 0.2s, border-color 0.2s;
+  }
+
+  .lab-btn:hover {
+    background: rgba(0, 255, 65, 0.12);
+    border-color: var(--col-neon-green);
+    text-shadow: 0 0 8px var(--col-glow-green);
+  }
+
+  .lab-readout {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.18em;
+    min-width: 0;
+  }
+
+  .lab-readout-name {
+    font-size: 0.78rem;
+    color: var(--col-heading);
+    text-shadow: 0 0 10px var(--col-glow-green);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .lab-readout-index {
+    font-size: 0.62rem;
+    color: var(--col-text-dim);
+    flex-shrink: 0;
+  }
+
+  .lab-credits {
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--col-text-dim);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    .lab-stage {
+      height: 340px;
+    }
+
+    .hud-panel {
+      font-size: 0.54rem;
+      padding: 7px 9px;
+      line-height: 1.6;
+    }
+
+    .hud-panel--bl,
+    .hud-panel--br,
+    .hud-callouts {
+      display: none;
+    }
+
+    .hud-panel--tl {
+      max-width: 58%;
+    }
+
+    .hud-name {
+      white-space: normal;
+    }
+
+    .lab-header {
+      font-size: 0.55rem;
+      letter-spacing: 0.14em;
+    }
+
+    .lab-header-mid {
+      display: none;
+    }
+
+    .lab-btn {
+      padding: 7px 12px;
+      font-size: 0.58rem;
+    }
+
+    .lab-readout-name {
+      font-size: 0.65rem;
+    }
+  }
+</style>

@@ -7,6 +7,9 @@ dist/
 # dependencies
 node_modules/
 
+# raw splat captures (the site ships the transcoded public/splats/*.spz)
+*.ply
+
 # logs
 npm-debug.log*
 yarn-debug.log*

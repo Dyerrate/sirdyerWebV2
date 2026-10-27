@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "dev", "--", "--port", "4399"],
       "port": 4399,
       "autoPort": false
+    },
+    {
+      "name": "sirdyer-dev-alt",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "4411"],
+      "port": 4411,
+      "autoPort": false
     }
   ]
 }

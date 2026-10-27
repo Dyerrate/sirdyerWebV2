@@ -1,0 +1,1576 @@
+---
+// Scroll-driven Gaussian splat portrait. The section is tall and the stage is
+// sticky, so scroll progress (0..1) scrubs one choreography:
+//   01 ACQUIRE  — splat materializes bottom-up, scan band sweeps the face
+//   02 SPIN-UP  — head accelerates through two turns, crown heats up
+//   03 OVERFLOW — crown splats break loose and vent upward as ASCII glyphs
+//   04 RENDER   — camera pulls back, the frame resolves into ASCII
+---
+
+<section id="core" class="core" aria-labelledby="coreTitle">
+  <div class="core-sticky" id="coreSticky">
+    <div class="core-bg" aria-hidden="true"></div>
+    <canvas class="core-canvas" id="coreCanvas" aria-hidden="true"></canvas>
+
+    <svg class="core-callouts" id="coreCallouts" aria-hidden="true">
+      <polyline id="calloutEyesLine" points="" />
+      <circle id="calloutEyesDot" r="3" cx="-10" cy="-10" />
+      <polyline id="calloutCrownLine" points="" />
+      <circle id="calloutCrownDot" r="3" cx="-10" cy="-10" />
+    </svg>
+
+    <div class="core-hud">
+      <span class="hud-corner hud-corner--tl" aria-hidden="true"></span>
+      <span class="hud-corner hud-corner--tr" aria-hidden="true"></span>
+      <span class="hud-corner hud-corner--bl" aria-hidden="true"></span>
+      <span class="hud-corner hud-corner--br" aria-hidden="true"></span>
+
+      <div class="hud-panel hud-panel--tl">
+        <p class="section-label">Neural Scan</p>
+        <h2 class="core-title" id="coreTitle">Creative <span class="accent-amber">Core</span></h2>
+        <p class="hud-line" aria-hidden="true">SRC: GAUSSIAN_SPLAT // 85,819 PTS</p>
+        <p class="hud-line" aria-hidden="true">MODE: <span class="hud-mode" id="coreMode">STANDBY</span></p>
+      </div>
+
+      <div class="hud-panel hud-panel--tr" aria-hidden="true">
+        <p class="tele-row"><span class="tele-label">ROT</span><span class="tele-value" id="telRot">000.0°</span></p>
+        <p class="tele-row"><span class="tele-label">RPM</span><span class="tele-value" id="telRpm">000</span></p>
+        <p class="tele-row"><span class="tele-label">CORE</span><span class="tele-value" id="telTemp">36.6°C</span></p>
+        <p class="tele-row"><span class="tele-label">OUT</span><span class="tele-value" id="telOut">000%</span></p>
+        <p class="tele-gauge" id="telGauge">▯▯▯▯▯▯▯▯▯▯▯▯</p>
+      </div>
+
+      <ol class="core-rail" aria-hidden="true">
+        <li class="rail-node" data-phase="0"><span>ACQUIRE</span></li>
+        <li class="rail-node" data-phase="1"><span>SPIN-UP</span></li>
+        <li class="rail-node" data-phase="2"><span>OVERFLOW</span></li>
+        <li class="rail-node" data-phase="3"><span>RENDER</span></li>
+        <span class="rail-fill" id="railFill"></span>
+      </ol>
+
+      <div class="core-tag" id="tagEyes" aria-hidden="true">OPTIC_ARRAY <em>// LOCKED</em></div>
+      <div class="core-tag" id="tagCrown" aria-hidden="true">IMAGINATION_CORE <em>// DORMANT</em></div>
+
+      <div class="core-reticle" id="coreReticle" aria-hidden="true">
+        <span class="reticle-label" id="reticleLabel">PRESSURE BUILDING</span>
+      </div>
+
+      <div class="core-hazard" id="coreHazard" aria-hidden="true">
+        <div class="hazard-track">
+          <span>⚠ CONTAINMENT BREACH :: CREATIVITY OVERFLOW :: VENTING THROUGH CROWN ⚠</span>
+          <span>⚠ CONTAINMENT BREACH :: CREATIVITY OVERFLOW :: VENTING THROUGH CROWN ⚠</span>
+        </div>
+      </div>
+
+      <div class="core-caption" aria-live="off">
+        <p class="caption-index" id="capIndex">01 / 04</p>
+        <p class="caption-title" id="capTitle">Subject Acquired</p>
+        <p class="caption-sub" id="capSub">Gaussian field locked — 85,819 points of Samuel Dyer, mapped in light.</p>
+      </div>
+
+      <p class="core-hint" id="coreHint" aria-hidden="true">▼ SCROLL TO INITIATE SPIN-UP</p>
+    </div>
+
+    <div class="core-loader" id="coreLoader" aria-hidden="true">
+      <p class="loader-text" id="loaderText">DECOMPRESSING GAUSSIAN FIELD</p>
+      <div class="loader-bar"><span id="loaderFill"></span></div>
+      <p class="loader-pct" id="loaderPct">000%</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  import * as THREE from "three";
+  import type { SplatMesh } from "@sparkjsdev/spark";
+
+  type Spark = typeof import("@sparkjsdev/spark");
+
+  // ── Splat framing ──
+  // The capture is in y-down PLY space. Its head centroid becomes the pivot
+  // origin so the head spins in place; crown/eye points are pivot-local.
+  const SPLAT_URL = "/splats/person.spz";
+  const HEAD_CENTER = new THREE.Vector3(0.022, -0.816, -0.044);
+  const CROWN_LOCAL = new THREE.Vector3(0, 0.108, 0);
+  const EYES_LOCAL = new THREE.Vector3(-0.032, -0.105, 0.106);
+  // Yaw that turns the captured face toward the camera.
+  const YAW0 = 0.22;
+  const TAU = Math.PI * 2;
+
+  // ── Choreography ──
+  const PHASES = [
+    {
+      at: 0,
+      mode: "ACQUIRE",
+      title: "Subject Acquired",
+      sub: "Gaussian field locked — 85,819 points of Samuel Dyer, mapped in light.",
+    },
+    {
+      at: 0.2,
+      mode: "SPIN-UP",
+      title: "Spinning Up",
+      sub: "Creative runtime accelerating. Ideas pressurizing behind the eyes.",
+    },
+    {
+      at: 0.48,
+      mode: "OVERFLOW",
+      title: "Creative Overflow",
+      sub: "Containment exceeded. Imagination venting through the crown as raw code.",
+    },
+    {
+      at: 0.8,
+      mode: "RENDER",
+      title: "Ideas → Reality",
+      sub: "Every overflow gets compiled into something you can step inside.",
+    },
+  ];
+
+  // Camera orbit keyframes around the head (pivot space).
+  const CAM_KEYS = [
+    { p: 0.0, dist: 1.5, elev: 0.03, azim: 0.0, ty: -0.12 },
+    { p: 0.16, dist: 1.08, elev: 0.05, azim: 0.0, ty: -0.03 },
+    { p: 0.42, dist: 1.2, elev: 0.42, azim: -0.35, ty: 0.02 },
+    { p: 0.62, dist: 1.75, elev: 0.14, azim: 0.2, ty: 0.12 },
+    { p: 0.86, dist: 2.2, elev: 0.05, azim: 0.08, ty: 0.19 },
+    { p: 1.0, dist: 2.3, elev: 0.02, azim: 0.0, ty: 0.12 },
+  ];
+
+  // ── Glyph atlas: printable ASCII (32..126) + block/industrial extras ──
+  const ATLAS_COLS = 16;
+  const ATLAS_ROWS = 8;
+  const ATLAS_CELL = 64;
+  const EXTRA_GLYPHS = "░▒▓█■□◆◇●○◢◣◤◥▲▼";
+  const glyphIndex = (ch: string) => {
+    const code = ch.charCodeAt(0);
+    if (code >= 32 && code <= 126) return code - 32;
+    const extra = EXTRA_GLYPHS.indexOf(ch);
+    return extra >= 0 ? 95 + extra : 0;
+  };
+  const ASCII_RAMP = " .:-=+*#%@".split("").map(glyphIndex);
+  const BURST_SET = "01{}[]<>/\\|#*+=%&$@?!;:~^░▒▓◆".split("").map(glyphIndex);
+
+  const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+  const seg = (p: number, a: number, b: number) => clamp01((p - a) / (b - a));
+  const smooth = (t: number) => t * t * (3 - 2 * t);
+  const easeInOut = (t: number) =>
+    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+  const bell = (t: number) => Math.sin(Math.PI * clamp01(t));
+
+  function buildAtlas(): THREE.CanvasTexture {
+    const w = ATLAS_COLS * ATLAS_CELL;
+    const h = ATLAS_ROWS * ATLAS_CELL;
+    const glyphs: string[] = [];
+    for (let c = 32; c <= 126; c++) glyphs.push(String.fromCharCode(c));
+    glyphs.push(...EXTRA_GLYPHS.split(""));
+
+    const draw = (blur: number) => {
+      const cv = document.createElement("canvas");
+      cv.width = w;
+      cv.height = h;
+      const ctx = cv.getContext("2d")!;
+      ctx.fillStyle = "#fff";
+      ctx.font = `${Math.round(ATLAS_CELL * 0.72)}px "Share Tech Mono", "Courier New", monospace`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      if (blur > 0) {
+        ctx.shadowColor = "#fff";
+        ctx.shadowBlur = blur;
+      }
+      glyphs.forEach((g, i) => {
+        const x = (i % ATLAS_COLS) * ATLAS_CELL + ATLAS_CELL / 2;
+        const y = Math.floor(i / ATLAS_COLS) * ATLAS_CELL + ATLAS_CELL / 2 + 2;
+        ctx.fillText(g, x, y);
+      });
+      return ctx.getImageData(0, 0, w, h);
+    };
+
+    // R = crisp glyph, G = haloed glyph (cheap baked bloom).
+    const sharp = draw(0);
+    const glow = draw(14);
+    const out = document.createElement("canvas");
+    out.width = w;
+    out.height = h;
+    const octx = out.getContext("2d")!;
+    const img = octx.createImageData(w, h);
+    for (let i = 0; i < img.data.length; i += 4) {
+      img.data[i] = sharp.data[i + 3];
+      img.data[i + 1] = glow.data[i + 3];
+      img.data[i + 2] = 0;
+      img.data[i + 3] = 255;
+    }
+    octx.putImageData(img, 0, 0);
+
+    const tex = new THREE.CanvasTexture(out);
+    tex.colorSpace = THREE.NoColorSpace;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    return tex;
+  }
+
+  // ── Shaders ──
+  const GLYPH_FRAG = /* glsl */ `
+    uniform sampler2D uAtlas;
+    varying float vGlyph;
+    varying float vAlpha;
+    varying vec3 vColor;
+    void main() {
+      float g = floor(vGlyph + 0.5);
+      float col = mod(g, ${ATLAS_COLS}.0);
+      float row = floor(g / ${ATLAS_COLS}.0);
+      vec2 uv = vec2(
+        (col + gl_PointCoord.x) / ${ATLAS_COLS}.0,
+        1.0 - (row + gl_PointCoord.y) / ${ATLAS_ROWS}.0
+      );
+      vec4 t = texture2D(uAtlas, uv);
+      float a = (t.r + t.g * 0.55) * vAlpha;
+      if (a < 0.01) discard;
+      gl_FragColor = vec4(vColor * a, a);
+    }
+  `;
+
+  const FOUNTAIN_VERT = /* glsl */ `
+    attribute vec3 aStart;
+    attribute vec4 aRand;
+    attribute float aGlyph;
+    uniform float uTime;
+    uniform float uBurst;
+    uniform float uAmt;
+    uniform float uViewH;
+    uniform float uSize;
+    uniform vec3 uHot;
+    uniform vec3 uC0;
+    uniform vec3 uC1;
+    uniform vec3 uC2;
+    uniform vec3 uC3;
+    uniform float uSet[${BURST_SET.length}];
+    varying float vGlyph;
+    varying float vAlpha;
+    varying vec3 vColor;
+    void main() {
+      float live = step(aRand.x, uAmt);
+      float life = fract(uTime * mix(0.16, 0.42, aRand.y) + aRand.z);
+      vec3 p = aStart;
+      vec2 radial = aStart.xz;
+      float rl = length(radial);
+      radial = rl > 1e-4 ? radial / rl : vec2(1.0, 0.0);
+
+      // Fountain: rise, flare outward, twist — reach grows with the burst.
+      float reach = 0.25 + 1.15 * uBurst;
+      p.y += life * reach * (0.55 + 0.6 * aRand.w) + life * life * 0.2 * uBurst;
+      p.xz += radial * life * (0.03 + 0.42 * aRand.y) * (0.35 + uBurst);
+      float ang = life * (aRand.w - 0.5) * 5.0;
+      float ca = cos(ang);
+      float sa = sin(ang);
+      p.xz = vec2(ca * p.x - sa * p.z, sa * p.x + ca * p.z);
+      p.x += sin(uTime * 1.7 + aRand.z * 31.0) * 0.02 * life;
+      p.z += cos(uTime * 1.3 + aRand.x * 29.0) * 0.02 * life;
+
+      vec4 mv = modelViewMatrix * vec4(p, 1.0);
+      gl_Position = projectionMatrix * mv;
+      float size = uSize * mix(0.7, 1.5, aRand.y) * (1.0 - 0.35 * life);
+      gl_PointSize = size * uViewH * projectionMatrix[1][1] * 0.5 / -mv.z;
+
+      vAlpha = live * smoothstep(0.0, 0.06, life) * (1.0 - smoothstep(0.55, 1.0, life));
+      float k = mod(aGlyph + floor(uTime * (1.5 + 9.0 * aRand.x)), ${BURST_SET.length}.0);
+      vGlyph = uSet[int(k)];
+      vec3 neon = aRand.w < 0.4 ? uC0 : (aRand.w < 0.7 ? uC1 : (aRand.w < 0.88 ? uC2 : uC3));
+      vColor = mix(uHot, neon, smoothstep(0.02, 0.3, life)) * 1.4;
+    }
+  `;
+
+  const RING_VERT = /* glsl */ `
+    attribute float aAngle;
+    attribute float aGlyph;
+    uniform float uRot;
+    uniform float uRadius;
+    uniform float uAmt;
+    uniform float uTime;
+    uniform float uViewH;
+    uniform float uSize;
+    uniform float uCenterZ;
+    uniform vec3 uColor;
+    varying float vGlyph;
+    varying float vAlpha;
+    varying vec3 vColor;
+    float hash(float n) { return fract(sin(n) * 43758.5453); }
+    void main() {
+      float a = aAngle + uRot;
+      vec3 p = vec3(cos(a) * uRadius, 0.0, sin(a) * uRadius);
+      vec4 mv = modelViewMatrix * vec4(p, 1.0);
+      gl_Position = projectionMatrix * mv;
+      gl_PointSize = uSize * uViewH * projectionMatrix[1][1] * 0.5 / -mv.z;
+
+      // Glyphs behind the head are dimmed (splats don't write depth).
+      float behind = 1.0 - smoothstep(uCenterZ - 0.06, uCenterZ + 0.02, mv.z);
+      vAlpha = uAmt * mix(1.0, 0.035, behind) * (0.78 + 0.22 * sin(uTime * 6.0 + aAngle * 13.0));
+
+      // Occasional character corruption.
+      float tick = floor(uTime * 9.0);
+      float corrupt = step(0.965, hash(tick * 1.37 + aAngle * 91.7));
+      vGlyph = mix(aGlyph, 1.0 + floor(hash(tick + aAngle * 7.3) * 31.0), corrupt);
+      vColor = mix(uColor, vec3(1.0), corrupt * 0.6);
+    }
+  `;
+
+  const POST_VERT = /* glsl */ `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = vec4(position.xy, 0.0, 1.0);
+    }
+  `;
+
+  const POST_FRAG = /* glsl */ `
+    uniform sampler2D tScene;
+    uniform sampler2D tAtlas;
+    uniform vec2 uRes;
+    uniform float uCell;
+    uniform float uRamp[10];
+    uniform float uAsciiAll;
+    uniform float uAsciiTop;
+    uniform float uTopY;
+    uniform float uScanY;
+    uniform float uScanAmt;
+    uniform float uTime;
+    uniform float uGlitch;
+    uniform vec3 uTint;
+    varying vec2 vUv;
+
+    float hash12(vec2 p) {
+      vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+      p3 += dot(p3, p3.yzx + 33.33);
+      return fract((p3.x + p3.y) * p3.z);
+    }
+    // Spark writes linear color into render targets; encode for display here.
+    vec4 sceneAt(vec2 uv) {
+      vec4 c = texture2D(tScene, uv);
+      c.rgb = pow(max(c.rgb, 0.0), vec3(1.0 / 2.2));
+      return c;
+    }
+    float glyphAt(float g, vec2 cuv) {
+      float col = mod(g, ${ATLAS_COLS}.0);
+      float row = floor(g / ${ATLAS_COLS}.0);
+      vec2 uv = vec2((col + cuv.x) / ${ATLAS_COLS}.0, 1.0 - (row + 1.0 - cuv.y) / ${ATLAS_ROWS}.0);
+      return texture2D(tAtlas, uv).r;
+    }
+
+    void main() {
+      vec2 uv = vUv;
+
+      // Horizontal slice tearing during the overflow surge.
+      float slice = floor(uv.y * 48.0);
+      float gj = hash12(vec2(slice, floor(uTime * 14.0)));
+      uv.x += uGlitch * step(0.82, gj) * (gj - 0.9) * 0.08;
+      vec4 src = sceneAt(uv);
+      if (uGlitch > 0.001) {
+        src.r = sceneAt(uv + vec2(0.004 * uGlitch, 0.0)).r;
+        src.b = sceneAt(uv - vec2(0.004 * uGlitch, 0.0)).b;
+      }
+
+      // ASCII re-raster: one luminance sample per cell → ramp glyph.
+      vec2 grid = uRes / uCell;
+      vec2 cid = floor(uv * grid);
+      vec2 cuv = fract(uv * grid);
+      vec2 cc = (cid + 0.5) / grid;
+      vec4 cs = sceneAt(cc);
+      float lum = dot(cs.rgb, vec3(0.299, 0.587, 0.114));
+      float lvl = clamp(pow(lum, 0.75) * 1.15, 0.0, 0.999) * 10.0;
+      float m = glyphAt(uRamp[int(lvl)], cuv);
+      vec3 base = cs.a > 0.001 ? cs.rgb / cs.a : vec3(0.0);
+      vec3 asciiRgb = mix(base, uTint, 0.45) * (0.75 + lum * 1.4);
+      vec4 ascii = vec4(asciiRgb * m, m * clamp(cs.a * 1.6, 0.0, 1.0));
+
+      // Where ASCII takes over: scan band, everything above the crown, or all.
+      float scanMask = uScanAmt * (1.0 - smoothstep(0.015, 0.07, abs(cc.y - uScanY)));
+      float topMask = uAsciiTop * smoothstep(uTopY + 0.02, uTopY + 0.3, cc.y);
+      float mask = clamp(max(max(scanMask, topMask), uAsciiAll), 0.0, 1.0);
+      float cellOn = step(hash12(cid + 17.0), mask * 1.1 - 0.05);
+      vec4 outc = mix(src, ascii, cellOn);
+
+      // Scan line itself.
+      float line = uScanAmt * exp(-pow((uv.y - uScanY) * uRes.y * 0.35, 2.0));
+      line *= 1.0 - smoothstep(0.28, 0.5, abs(uv.x - 0.5));
+      outc.rgb += vec3(0.0, 0.83, 1.0) * line * 0.9;
+      outc.a = max(outc.a, line * 0.9);
+
+      gl_FragColor = outc;
+    }
+  `;
+
+  // Per-splat effects, run on the GPU by Spark in object (PLY, y-down) space.
+  function makeSplatFx(spark: Spark, u: Record<string, any>) {
+    const { dyno } = spark;
+    return dyno.dynoBlock({ gsplat: dyno.Gsplat }, { gsplat: dyno.Gsplat }, ({ gsplat }) => {
+      const fx = new dyno.Dyno({
+        inTypes: {
+          gsplat: dyno.Gsplat,
+          time: "float",
+          reveal: "float",
+          scanH: "float",
+          scan: "float",
+          heat: "float",
+          burst: "float",
+        } as const,
+        outTypes: { gsplat: dyno.Gsplat },
+        globals: () => [
+          dyno.unindent(`
+            float coreHash(uint x) {
+              x ^= x >> 16u; x *= 0x7feb352du;
+              x ^= x >> 15u; x *= 0x846ca68bu;
+              x ^= x >> 16u;
+              return float(x) / 4294967295.0;
+            }
+          `),
+        ],
+        statements: ({ inputs, outputs }) =>
+          dyno.unindentLines(`
+            ${outputs.gsplat} = ${inputs.gsplat};
+            {
+              vec3 c = ${inputs.gsplat}.center;
+              vec4 col = ${inputs.gsplat}.rgba;
+              float h = -c.y;
+              uint id = uint(${inputs.gsplat}.index);
+              float r1 = coreHash(id);
+              float r2 = coreHash(id + 7919u);
+              float r3 = coreHash(id * 3u + 104729u);
+              const vec3 HC = vec3(${HEAD_CENTER.x}, ${HEAD_CENTER.y}, ${HEAD_CENTER.z});
+
+              // Materialize: hide everything above the reveal plane, burn its edge.
+              float edge = ${inputs.reveal} - h;
+              col.a *= smoothstep(-0.004, 0.012, edge);
+              col.rgb += vec3(0.0, 1.0, 0.25) * exp(-abs(edge) * 70.0) * 1.4;
+
+              // Scan band.
+              float band = exp(-pow((h - ${inputs.scanH}) * 45.0, 2.0)) * ${inputs.scan};
+              col.rgb = mix(col.rgb, vec3(0.0, 0.83, 1.0), band * 0.75) + vec3(0.0, 0.5, 0.8) * band * 0.5;
+
+              // Crown heat.
+              float crown = smoothstep(0.80, 0.915, h);
+              float flick = 0.65 + 0.35 * sin(${inputs.time} * 9.0 + r1 * 40.0);
+              col.rgb += vec3(1.0, 0.42, 0.0) * crown * ${inputs.heat} * flick;
+
+              // Overflow: crown splats break loose and cycle upward.
+              float leave = step(r1, 0.8) * crown;
+              float t = clamp(${inputs.burst} * 1.6 - (1.0 - crown) * 0.5 - r2 * 0.6, 0.0, 1.0) * leave;
+              if (t > 0.0) {
+                float life = fract(${inputs.time} * (0.12 + 0.25 * r3) + r2);
+                float travel = t * (0.04 + 0.55 * life * t);
+                vec2 rel = c.xz - HC.xz;
+                vec2 radial = rel / max(length(rel), 1e-4);
+                float ang = travel * (r3 - 0.5) * 9.0;
+                float ca = cos(ang);
+                float sa = sin(ang);
+                rel = vec2(ca * rel.x - sa * rel.y, sa * rel.x + ca * rel.y);
+                rel += radial * travel * (0.25 + 0.6 * r1);
+                c.xz = HC.xz + rel;
+                c.y -= travel * (0.9 + 0.8 * r2);
+                ${outputs.gsplat}.scales *= mix(1.0, 0.45, t);
+                vec3 neon = r3 < 0.4 ? vec3(0.0, 1.0, 0.25)
+                  : (r3 < 0.7 ? vec3(0.0, 0.83, 1.0)
+                  : (r3 < 0.88 ? vec3(1.0, 0.53, 0.0) : vec3(1.0, 0.13, 0.25)));
+                col.rgb = mix(col.rgb, neon, smoothstep(0.0, 0.5, t) * 0.9);
+                col.a *= mix(1.0, smoothstep(0.0, 0.1, life) * (1.0 - smoothstep(0.65, 1.0, life)), t);
+              }
+
+              ${outputs.gsplat}.center = c;
+              ${outputs.gsplat}.rgba = col;
+            }
+          `),
+      });
+      return { gsplat: fx.apply({ gsplat, ...u }).gsplat };
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const section = document.getElementById("core") as HTMLElement | null;
+    const sticky = document.getElementById("coreSticky") as HTMLElement | null;
+    const canvas = document.getElementById("coreCanvas") as HTMLCanvasElement | null;
+    if (!section || !sticky || !canvas) return;
+
+    const $ = (id: string) => document.getElementById(id) as HTMLElement;
+    const ui = {
+      mode: $("coreMode"),
+      rot: $("telRot"),
+      rpm: $("telRpm"),
+      temp: $("telTemp"),
+      out: $("telOut"),
+      gauge: $("telGauge"),
+      railFill: $("railFill"),
+      railNodes: Array.from(section.querySelectorAll<HTMLElement>(".rail-node")),
+      tagEyes: $("tagEyes"),
+      tagCrown: $("tagCrown"),
+      eyesLine: $("calloutEyesLine"),
+      eyesDot: $("calloutEyesDot"),
+      crownLine: $("calloutCrownLine"),
+      crownDot: $("calloutCrownDot"),
+      reticle: $("coreReticle"),
+      reticleLabel: $("reticleLabel"),
+      hazard: $("coreHazard"),
+      capIndex: $("capIndex"),
+      capTitle: $("capTitle"),
+      capSub: $("capSub"),
+      hint: $("coreHint"),
+      loader: $("coreLoader"),
+      loaderText: $("loaderText"),
+      loaderFill: $("loaderFill"),
+      loaderPct: $("loaderPct"),
+    };
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isSmall = window.matchMedia("(max-width: 768px)").matches;
+
+    // ── Caption decode effect ──
+    const SCRAMBLE = "!<>-_\\/[]{}=+*^?#░▒▓";
+    const scrambleTimers = new WeakMap<HTMLElement, number>();
+    function scrambleTo(el: HTMLElement, text: string, duration = 520) {
+      const prev = scrambleTimers.get(el);
+      if (prev) cancelAnimationFrame(prev);
+      if (reducedMotion) {
+        el.textContent = text;
+        return;
+      }
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / duration);
+        const solved = Math.floor(text.length * t);
+        let out = text.slice(0, solved);
+        for (let i = solved; i < text.length; i++) {
+          out += text[i] === " " ? " " : SCRAMBLE[(Math.random() * SCRAMBLE.length) | 0];
+        }
+        el.textContent = out;
+        if (t < 1) scrambleTimers.set(el, requestAnimationFrame(step));
+      };
+      scrambleTimers.set(el, requestAnimationFrame(step));
+    }
+
+    function fail(message: string) {
+      ui.loader.classList.add("is-error");
+      ui.loaderText.textContent = message;
+      ui.loaderPct.textContent = "ERR";
+    }
+
+    // ── Renderer + scenes ──
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: false,
+        alpha: true,
+        premultipliedAlpha: true,
+        powerPreference: "high-performance",
+      });
+    } catch {
+      fail("SIGNAL LOST // WEBGL2 UNAVAILABLE");
+      return;
+    }
+    renderer.setClearColor(0x000000, 0);
+    const maxDpr = isSmall ? 1.5 : 1.75;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 50);
+    const head = new THREE.Group(); // spin pivot at the head centroid
+    scene.add(head);
+    const rings = new THREE.Group(); // world-aligned halos around the head
+    scene.add(rings);
+
+    // Half-float avoids banding in the linear buffer; fall back where the GPU
+    // can't render to float targets (an incomplete framebuffer draws nothing).
+    const floatTargets =
+      renderer.extensions.has("EXT_color_buffer_float") ||
+      renderer.extensions.has("EXT_color_buffer_half_float");
+    const sceneRT = new THREE.WebGLRenderTarget(1, 1, {
+      type: floatTargets ? THREE.HalfFloatType : THREE.UnsignedByteType,
+    });
+
+    const atlas = buildAtlas();
+    const linear = (hex: string) => new THREE.Color(hex);
+    const NEON = {
+      green: linear("#00ff41"),
+      cyan: linear("#00d4ff"),
+      amber: linear("#ff8800"),
+      red: linear("#ff2040"),
+      hot: linear("#fff1d6"),
+    };
+
+    const postMat = new THREE.ShaderMaterial({
+      vertexShader: POST_VERT,
+      fragmentShader: POST_FRAG,
+      uniforms: {
+        tScene: { value: sceneRT.texture },
+        tAtlas: { value: atlas },
+        uRes: { value: new THREE.Vector2(1, 1) },
+        uCell: { value: 10 },
+        uRamp: { value: ASCII_RAMP },
+        uAsciiAll: { value: 0 },
+        uAsciiTop: { value: 0 },
+        uTopY: { value: 0.7 },
+        uScanY: { value: 0.5 },
+        uScanAmt: { value: 0 },
+        uTime: { value: 0 },
+        uGlitch: { value: 0 },
+        uTint: { value: new THREE.Vector3(0.0, 1.0, 0.25) },
+      },
+      depthTest: false,
+      depthWrite: false,
+      blending: THREE.NoBlending,
+    });
+    const postScene = new THREE.Scene();
+    postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMat));
+    const postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    // ── ASCII halos ──
+    const RING_DEFS = [
+      { y: 0.16, radius: 0.15, size: 0.022, color: NEON.amber, speed: 1.2, tilt: [0.08, 0.05], text: "IMAGINATION_ENGINE :: PRESSURE :: " },
+      { y: 0.0, radius: 0.25, size: 0.026, color: NEON.green, speed: -0.8, tilt: [-0.12, 0.1], text: "CREATIVE_RUNTIME v2.6 // CODE // ART // SPATIAL // " },
+      { y: -0.27, radius: 0.36, size: 0.03, color: NEON.cyan, speed: 0.5, tilt: [0.1, -0.14], text: "SUBJECT_01 :: SAMUEL_DYER :: NEURAL TOPOLOGY LOCKED :: " },
+    ];
+    const ringMats: THREE.ShaderMaterial[] = [];
+    RING_DEFS.forEach((def) => {
+      const count = Math.floor((TAU * def.radius) / (def.size * 0.92));
+      const angles = new Float32Array(count);
+      const glyphs = new Float32Array(count);
+      for (let i = 0; i < count; i++) {
+        // Text reads left→right across the front of the ring.
+        angles[i] = Math.PI / 2 - (i / count) * TAU;
+        glyphs[i] = glyphIndex(def.text[i % def.text.length]);
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(count * 3), 3));
+      geo.setAttribute("aAngle", new THREE.BufferAttribute(angles, 1));
+      geo.setAttribute("aGlyph", new THREE.BufferAttribute(glyphs, 1));
+      const mat = new THREE.ShaderMaterial({
+        vertexShader: RING_VERT,
+        fragmentShader: GLYPH_FRAG,
+        uniforms: {
+          uAtlas: { value: atlas },
+          uRot: { value: 0 },
+          uRadius: { value: def.radius },
+          uAmt: { value: 0 },
+          uTime: { value: 0 },
+          uViewH: { value: 1 },
+          uSize: { value: def.size },
+          uCenterZ: { value: -1 },
+          uColor: { value: def.color },
+        },
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        premultipliedAlpha: true,
+      });
+      ringMats.push(mat);
+      const pts = new THREE.Points(geo, mat);
+      pts.frustumCulled = false;
+      pts.renderOrder = 5;
+      const holder = new THREE.Group();
+      holder.position.y = def.y;
+      holder.rotation.set(def.tilt[0], 0, def.tilt[1]);
+      holder.add(pts);
+      rings.add(holder);
+    });
+
+    // ── Crown fountain (seeded from real crown splats once loaded) ──
+    const FOUNTAIN_COUNT = isSmall ? 1400 : 2600;
+    const fountainGeo = new THREE.BufferGeometry();
+    const fStart = new Float32Array(FOUNTAIN_COUNT * 3);
+    const fRand = new Float32Array(FOUNTAIN_COUNT * 4);
+    const fGlyph = new Float32Array(FOUNTAIN_COUNT);
+    for (let i = 0; i < FOUNTAIN_COUNT; i++) {
+      // Placeholder cap until real splat positions arrive.
+      const a = Math.random() * TAU;
+      const r = Math.sqrt(Math.random()) * 0.09;
+      fStart[i * 3] = Math.cos(a) * r;
+      fStart[i * 3 + 1] = CROWN_LOCAL.y - r * r * 4;
+      fStart[i * 3 + 2] = Math.sin(a) * r;
+      for (let k = 0; k < 4; k++) fRand[i * 4 + k] = Math.random();
+      fGlyph[i] = Math.floor(Math.random() * BURST_SET.length);
+    }
+    fountainGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(FOUNTAIN_COUNT * 3), 3));
+    fountainGeo.setAttribute("aStart", new THREE.BufferAttribute(fStart, 3));
+    fountainGeo.setAttribute("aRand", new THREE.BufferAttribute(fRand, 4));
+    fountainGeo.setAttribute("aGlyph", new THREE.BufferAttribute(fGlyph, 1));
+    const fountainMat = new THREE.ShaderMaterial({
+      vertexShader: FOUNTAIN_VERT,
+      fragmentShader: GLYPH_FRAG,
+      uniforms: {
+        uAtlas: { value: atlas },
+        uTime: { value: 0 },
+        uBurst: { value: 0 },
+        uAmt: { value: 0 },
+        uViewH: { value: 1 },
+        uSize: { value: 0.024 },
+        uHot: { value: NEON.hot },
+        uC0: { value: NEON.green },
+        uC1: { value: NEON.cyan },
+        uC2: { value: NEON.amber },
+        uC3: { value: NEON.red },
+        uSet: { value: BURST_SET },
+      },
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      premultipliedAlpha: true,
+    });
+    const fountain = new THREE.Points(fountainGeo, fountainMat);
+    fountain.frustumCulled = false;
+    fountain.renderOrder = 6;
+    head.add(fountain);
+
+    function seedFountain(splat: SplatMesh) {
+      const picks: number[] = [];
+      let seen = 0;
+      splat.forEachSplat((_i, center, _s, _q, opacity) => {
+        if (-center.y < 0.85 || opacity < 0.25) return;
+        // Reservoir sample so seeds spread over the whole crown.
+        seen++;
+        let j = picks.length / 3;
+        if (seen > FOUNTAIN_COUNT) {
+          j = Math.floor(Math.random() * seen);
+          if (j >= FOUNTAIN_COUNT) return;
+        }
+        picks[j * 3] = center.x;
+        picks[j * 3 + 1] = center.y;
+        picks[j * 3 + 2] = center.z;
+      });
+      const n = picks.length / 3;
+      if (n < 32) return;
+      for (let i = 0; i < FOUNTAIN_COUNT; i++) {
+        const k = (i % n) * 3;
+        // PLY (y-down) → pivot space: flip y/z, then recentre on the head.
+        fStart[i * 3] = picks[k] - HEAD_CENTER.x;
+        fStart[i * 3 + 1] = -picks[k + 1] + HEAD_CENTER.y;
+        fStart[i * 3 + 2] = -picks[k + 2] + HEAD_CENTER.z;
+      }
+      fountainGeo.attributes.aStart.needsUpdate = true;
+    }
+
+    // ── Splat (Spark) ──
+    const fx = {
+      time: null as any,
+      reveal: null as any,
+      scanH: null as any,
+      scan: null as any,
+      heat: null as any,
+      burst: null as any,
+    };
+    let splat: SplatMesh | null = null;
+    let splatReady = false;
+    let loadStarted = false;
+
+    async function loadSplat() {
+      if (loadStarted) return;
+      loadStarted = true;
+      try {
+        const spark = await import("@sparkjsdev/spark");
+        const sparkRenderer = new spark.SparkRenderer({ renderer });
+        scene.add(sparkRenderer);
+
+        for (const key of Object.keys(fx) as (keyof typeof fx)[]) {
+          fx[key] = spark.dyno.dynoFloat(0);
+        }
+        fx.reveal.value = 0.28;
+
+        splat = new spark.SplatMesh({
+          url: SPLAT_URL,
+          onProgress: (e: ProgressEvent) => {
+            if (!e.total) return;
+            const pct = Math.round((e.loaded / e.total) * 100);
+            ui.loaderFill.style.width = `${pct}%`;
+            ui.loaderPct.textContent = `${String(pct).padStart(3, "0")}%`;
+          },
+        });
+        // PLY y-down → three y-up, then recentre so the head spins in place.
+        splat.quaternion.set(1, 0, 0, 0);
+        splat.position.set(-HEAD_CENTER.x, HEAD_CENTER.y, HEAD_CENTER.z);
+        splat.objectModifier = makeSplatFx(spark, fx);
+        splat.updateGenerator();
+        head.add(splat);
+
+        await splat.initialized;
+        seedFountain(splat);
+        splatReady = true;
+        ui.loader.classList.add("is-done");
+      } catch (err) {
+        console.error("[CreativeCore] splat load failed", err);
+        const reason = err instanceof Error ? err.message : String(err);
+        fail(`SIGNAL LOST // ${reason.slice(0, 90).toUpperCase()}`);
+      }
+    }
+
+    // ── Sizing ──
+    let viewW = 1;
+    let viewH = 1;
+    function resize() {
+      const r = sticky!.getBoundingClientRect();
+      viewW = Math.max(1, Math.round(r.width));
+      viewH = Math.max(1, Math.round(r.height));
+      const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
+      renderer.setPixelRatio(dpr);
+      renderer.setSize(viewW, viewH, false);
+      const bw = Math.round(viewW * dpr);
+      const bh = Math.round(viewH * dpr);
+      sceneRT.setSize(bw, bh);
+      camera.aspect = viewW / viewH;
+      // On wide screens nudge the subject right of centre, clear of the captions.
+      const shift = camera.aspect > 1.15 ? viewW * 0.07 : 0;
+      if (shift) camera.setViewOffset(viewW, viewH, -shift, 0, viewW, viewH);
+      else camera.clearViewOffset();
+      camera.updateProjectionMatrix();
+      postMat.uniforms.uRes.value.set(bw, bh);
+      postMat.uniforms.uCell.value = Math.round((isSmall ? 8 : 10) * dpr);
+      fountainMat.uniforms.uViewH.value = bh;
+      ringMats.forEach((m) => (m.uniforms.uViewH.value = bh));
+    }
+    new ResizeObserver(resize).observe(sticky);
+    resize();
+
+    // ── Scroll progress ──
+    let pTarget = 0;
+    let enterTarget = 0;
+    let p = 0;
+    let enter = 0;
+    function readScroll() {
+      const rect = section!.getBoundingClientRect();
+      const vh = window.innerHeight;
+      pTarget = clamp01(-rect.top / Math.max(1, rect.height - vh));
+      enterTarget = clamp01((vh - rect.top) / vh);
+    }
+
+    function cameraAt(prog: number) {
+      let i = 0;
+      while (i < CAM_KEYS.length - 2 && prog > CAM_KEYS[i + 1].p) i++;
+      const a = CAM_KEYS[i];
+      const b = CAM_KEYS[i + 1];
+      const t = smooth(seg(prog, a.p, b.p));
+      return {
+        dist: lerp(a.dist, b.dist, t),
+        elev: lerp(a.elev, b.elev, t),
+        azim: lerp(a.azim, b.azim, t),
+        ty: lerp(a.ty, b.ty, t),
+      };
+    }
+
+    const tmp = new THREE.Vector3();
+    function toScreen(local: THREE.Vector3, obj: THREE.Object3D) {
+      tmp.copy(local);
+      obj.localToWorld(tmp);
+      tmp.project(camera);
+      return {
+        x: (tmp.x * 0.5 + 0.5) * viewW,
+        y: (-tmp.y * 0.5 + 0.5) * viewH,
+        uvY: tmp.y * 0.5 + 0.5,
+      };
+    }
+
+    function placeCallout(
+      line: HTMLElement,
+      dot: HTMLElement,
+      tag: HTMLElement,
+      at: { x: number; y: number },
+      dx: number,
+      dy: number,
+      alpha: number,
+    ) {
+      const ex = at.x + dx;
+      const ey = at.y + dy;
+      const kx = at.x + dx * 0.35;
+      line.setAttribute("points", `${at.x},${at.y} ${kx},${ey} ${ex},${ey}`);
+      dot.setAttribute("cx", `${at.x}`);
+      dot.setAttribute("cy", `${at.y}`);
+      line.style.opacity = dot.style.opacity = `${alpha}`;
+      tag.style.opacity = `${alpha}`;
+      tag.style.transform = `translate(${ex}px, ${ey}px) translate(${dx < 0 ? "-100%" : "0"}, -50%)`;
+    }
+
+    // ── Frame loop ──
+    let running = false;
+    let rafId = 0;
+    let last = performance.now();
+    let clock = 0;
+    let lastYaw = YAW0;
+    let rpm = 0;
+    let phase = -1;
+    let hudTick = 0;
+
+    function frame(now: number) {
+      rafId = requestAnimationFrame(frame);
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      clock += dt * (reducedMotion ? 0.4 : 1);
+
+      readScroll();
+      const k = 1 - Math.exp(-dt * 6);
+      p += (pTarget - p) * k;
+      enter += (enterTarget - enter) * k;
+
+      // Head spin: two eased turns, then a slow sway back to the camera.
+      const spinT = easeInOut(seg(p, 0.16, 0.66));
+      const sway = Math.sin(seg(p, 0.66, 1) * Math.PI) * 0.3;
+      const idle = Math.sin(clock * 0.5) * 0.05 * (1 - seg(p, 0.1, 0.18));
+      const yaw = YAW0 + spinT * TAU * 2 + sway + idle;
+      head.rotation.y = yaw;
+      head.position.y = 0.04 * spinT;
+      rings.position.copy(head.position);
+
+      const instRpm = (Math.abs(yaw - lastYaw) / Math.max(dt, 1e-3) / TAU) * 60;
+      rpm += (instRpm - rpm) * Math.min(1, dt * 4);
+      lastYaw = yaw;
+
+      // Camera orbit (pulled back a little on portrait screens).
+      const cam = cameraAt(p);
+      const aspect = viewW / viewH;
+      const dist = cam.dist * lerp(1, 1.45, clamp01((1 - aspect) / 0.5));
+      const target = new THREE.Vector3(0, cam.ty + head.position.y, 0);
+      camera.position.set(
+        target.x + dist * Math.sin(cam.azim) * Math.cos(cam.elev),
+        target.y + dist * Math.sin(cam.elev),
+        target.z + dist * Math.cos(cam.azim) * Math.cos(cam.elev),
+      );
+      camera.lookAt(target);
+      scene.updateMatrixWorld();
+      camera.updateMatrixWorld();
+
+      // Effect drivers.
+      const scanT = seg(p, 0.03, 0.2);
+      const scanAmt = bell(scanT);
+      const scanH = lerp(0.95, 0.35, scanT);
+      const heat = seg(p, 0.3, 0.55) * (1 - 0.6 * seg(p, 0.8, 1));
+      const burst = easeInOut(seg(p, 0.48, 0.86));
+      const revealT = clamp01(enter * 0.85 + p * 3);
+      const ringAmt = seg(p, 0.14, 0.26) * (1 - seg(p, 0.7, 0.88));
+      const ringExpand = seg(p, 0.55, 0.88);
+      const glitch = reducedMotion ? 0 : bell(seg(p, 0.47, 0.57)) * 0.9;
+
+      if (splat && fx.time) {
+        fx.time.value = clock;
+        fx.reveal.value = 0.28 + 0.8 * easeOut(revealT);
+        fx.scanH.value = scanH;
+        fx.scan.value = scanAmt;
+        fx.heat.value = heat;
+        fx.burst.value = burst;
+        splat.updateVersion();
+      }
+
+      fountainMat.uniforms.uTime.value = clock;
+      fountainMat.uniforms.uBurst.value = burst;
+      fountainMat.uniforms.uAmt.value = splatReady
+        ? seg(p, 0.45, 0.62) * (1 - 0.3 * seg(p, 0.92, 1))
+        : 0;
+
+      tmp.set(0, 0, 0);
+      head.localToWorld(tmp);
+      tmp.applyMatrix4(camera.matrixWorldInverse);
+      const centerZ = tmp.z;
+      ringMats.forEach((m, i) => {
+        const def = RING_DEFS[i];
+        m.uniforms.uTime.value = clock;
+        m.uniforms.uRot.value = clock * 0.12 * def.speed + spinT * TAU * 0.5 * Math.sign(def.speed);
+        m.uniforms.uRadius.value = def.radius * (1 + ringExpand * (1.2 + i * 0.3));
+        m.uniforms.uAmt.value = (splatReady ? ringAmt : 0) * (1 - ringExpand * 0.85);
+        m.uniforms.uCenterZ.value = centerZ;
+      });
+
+      const crown = toScreen(CROWN_LOCAL, head);
+      const scanPt = toScreen(new THREE.Vector3(0, scanH + HEAD_CENTER.y, 0), head);
+      const pu = postMat.uniforms;
+      pu.uTime.value = clock;
+      pu.uScanAmt.value = splatReady ? scanAmt : 0;
+      pu.uScanY.value = scanPt.uvY;
+      pu.uAsciiTop.value = seg(p, 0.55, 0.78);
+      pu.uTopY.value = crown.uvY;
+      pu.uAsciiAll.value = seg(p, 0.92, 1.0);
+      pu.uGlitch.value = glitch;
+
+      renderer.setRenderTarget(sceneRT);
+      renderer.clear();
+      renderer.render(scene, camera);
+      renderer.setRenderTarget(null);
+      renderer.render(postScene, postCam);
+
+      // ── HUD ──
+      const nextPhase = PHASES.reduce((acc, ph, i) => (p >= ph.at ? i : acc), 0);
+      if (nextPhase !== phase) {
+        phase = nextPhase;
+        const ph = PHASES[phase];
+        ui.capIndex.textContent = `0${phase + 1} / 0${PHASES.length}`;
+        scrambleTo(ui.capTitle, ph.title);
+        scrambleTo(ui.capSub, ph.sub, 700);
+        scrambleTo(ui.mode, ph.mode, 300);
+        ui.railNodes.forEach((n, i) => n.classList.toggle("is-active", i <= phase));
+        section!.dataset.phase = String(phase);
+      }
+      ui.railFill.style.transform = `scaleY(${p})`;
+      ui.hint.style.opacity = `${1 - seg(p, 0.0, 0.04)}`;
+
+      const showCallouts = splatReady ? seg(p, 0.05, 0.1) * (1 - seg(p, 0.16, 0.21)) : 0;
+      placeCallout(ui.eyesLine, ui.eyesDot, ui.tagEyes, toScreen(EYES_LOCAL, head), -170, 14, showCallouts);
+      placeCallout(ui.crownLine, ui.crownDot, ui.tagCrown, crown, 150, 34, showCallouts);
+
+      const showReticle = splatReady ? seg(p, 0.26, 0.33) * (1 - seg(p, 0.74, 0.82)) : 0;
+      ui.reticle.style.opacity = `${showReticle}`;
+      ui.reticle.style.transform = `translate(${crown.x}px, ${crown.y}px) translate(-50%, -50%) scale(${1 + heat * 0.25})`;
+      ui.reticle.classList.toggle("is-critical", burst > 0.05);
+
+      ui.hazard.style.opacity = `${seg(p, 0.48, 0.53) * (1 - seg(p, 0.78, 0.84))}`;
+
+      if (now - hudTick > 90) {
+        hudTick = now;
+        const deg = (((yaw - YAW0) * 180) / Math.PI) % 360;
+        ui.rot.textContent = `${((deg + 360) % 360).toFixed(1).padStart(5, "0")}°`;
+        ui.rpm.textContent = String(Math.round(rpm)).padStart(3, "0");
+        ui.temp.textContent = `${(36.6 + heat * 63.3 + burst * 900).toFixed(1)}°C`;
+        ui.out.textContent = `${String(Math.round(burst * 100 + seg(p, 0.86, 1) * 899)).padStart(3, "0")}%`;
+        const lit = Math.round(clamp01(heat * 0.6 + burst * 0.4 + spinT * 0.2) * 12);
+        ui.gauge.textContent = "▮".repeat(lit) + "▯".repeat(12 - lit);
+        ui.reticleLabel.textContent =
+          burst > 0.05 ? "OUTPUT: UNBOUNDED" : `PRESSURE ${Math.round(heat * 100)}%`;
+        ui.tagCrown.querySelector("em")!.textContent = heat > 0.02 ? "// HEATING" : "// DORMANT";
+      }
+    }
+
+    function start() {
+      if (running || document.hidden) return;
+      running = true;
+      last = performance.now();
+      rafId = requestAnimationFrame(frame);
+    }
+    function stop() {
+      running = false;
+      cancelAnimationFrame(rafId);
+    }
+
+    // Only render while the section is on screen.
+    let onScreen = false;
+    new IntersectionObserver(
+      ([entry]) => {
+        onScreen = entry.isIntersecting;
+        if (onScreen) start();
+        else stop();
+      },
+      { rootMargin: "50px 0px" },
+    ).observe(section);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) stop();
+      else if (onScreen) start();
+    });
+
+    // Fetch the splat early (the hero intro buys time) or as soon as it's near.
+    new IntersectionObserver(
+      ([entry], obs) => {
+        if (!entry.isIntersecting) return;
+        obs.disconnect();
+        loadSplat();
+      },
+      { rootMargin: "150% 0px" },
+    ).observe(section);
+    const idle = (cb: () => void) =>
+      "requestIdleCallback" in window ? window.requestIdleCallback(cb) : setTimeout(cb, 1500);
+    if (document.readyState === "complete") idle(loadSplat);
+    else window.addEventListener("load", () => idle(loadSplat), { once: true });
+  });
+</script>
+
+<style>
+  .core {
+    position: relative;
+    height: 520vh;
+  }
+
+  .core-sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Backdrop: furnace-lit grid ── */
+  .core-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 55% at 50% 42%, rgba(255, 136, 0, 0.07), transparent 70%),
+      radial-gradient(ellipse at 50% 60%, #0b0306 0%, #030102 75%);
+  }
+
+  .core-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at 50% 50%, black 15%, transparent 70%);
+  }
+
+  /* Fade the top edge so the hero hands off cleanly */
+  .core-bg::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 18vh;
+    background: linear-gradient(180deg, rgba(10, 10, 12, 1), transparent);
+  }
+
+  .core-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* ── Callout leader lines ── */
+  .core-callouts {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  .core-callouts polyline {
+    fill: none;
+    stroke: var(--col-neon-green);
+    stroke-width: 1;
+    opacity: 0;
+    filter: drop-shadow(0 0 4px rgba(0, 255, 65, 0.6));
+  }
+
+  .core-callouts circle {
+    fill: var(--col-neon-green);
+    opacity: 0;
+  }
+
+  /* ── HUD ── */
+  .core-hud {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    font-family: var(--font-mono);
+  }
+
+  .hud-corner {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border: 0 solid rgba(255, 136, 0, 0.35);
+  }
+  .hud-corner--tl { top: 72px; left: 20px; border-top-width: 2px; border-left-width: 2px; }
+  .hud-corner--tr { top: 72px; right: 20px; border-top-width: 2px; border-right-width: 2px; }
+  .hud-corner--bl { bottom: 20px; left: 20px; border-bottom-width: 2px; border-left-width: 2px; }
+  .hud-corner--br { bottom: 20px; right: 20px; border-bottom-width: 2px; border-right-width: 2px; }
+
+  .hud-panel {
+    position: absolute;
+    top: 88px;
+  }
+
+  .hud-panel--tl {
+    left: 40px;
+  }
+
+  .hud-panel--tl .section-label {
+    margin-bottom: 6px;
+  }
+
+  .core-title {
+    font-size: clamp(1.3rem, 3vw, 2rem);
+    margin-bottom: 14px;
+  }
+
+  .accent-amber {
+    color: var(--col-neon-amber);
+    text-shadow: 0 0 22px rgba(255, 136, 0, 0.4);
+  }
+
+  .hud-line {
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    color: var(--col-text-dim);
+    line-height: 1.9;
+  }
+
+  .hud-mode {
+    color: var(--col-neon-amber);
+  }
+
+  .hud-panel--tr {
+    right: 40px;
+    min-width: 170px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 136, 0, 0.22);
+    background:
+      repeating-linear-gradient(0deg, transparent 0 3px, rgba(255, 136, 0, 0.025) 3px 4px),
+      rgba(10, 3, 6, 0.55);
+  }
+
+  .tele-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    line-height: 1.9;
+  }
+
+  .tele-label {
+    color: var(--col-text-dim);
+  }
+
+  .tele-value {
+    color: var(--col-neon-green);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tele-gauge {
+    margin-top: 6px;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--col-neon-amber);
+    text-shadow: 0 0 6px rgba(255, 136, 0, 0.6);
+  }
+
+  /* ── Progress rail ── */
+  .core-rail {
+    position: absolute;
+    left: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 34vh;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .rail-fill {
+    position: absolute;
+    left: -1px;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--col-neon-green), var(--col-neon-amber));
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+    transform-origin: top;
+    transform: scaleY(0);
+  }
+
+  .rail-node {
+    position: relative;
+    padding-left: 14px;
+    font-size: 0.55rem;
+    letter-spacing: 0.22em;
+    color: var(--col-text-dim);
+    transition: color 0.4s ease;
+  }
+
+  .rail-node::before {
+    content: "";
+    position: absolute;
+    left: -4px;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    transform: translateY(-50%) rotate(45deg);
+    background: var(--col-bg);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  }
+
+  .rail-node.is-active {
+    color: var(--col-neon-green);
+  }
+
+  .rail-node.is-active::before {
+    background: var(--col-neon-green);
+    border-color: var(--col-neon-green);
+    box-shadow: 0 0 8px var(--col-neon-green);
+  }
+
+  /* ── Callout tags (positioned by JS) ── */
+  .core-tag {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    padding: 4px 10px;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    color: var(--col-neon-green);
+    border: 1px solid rgba(0, 255, 65, 0.35);
+    background: rgba(5, 2, 4, 0.7);
+    white-space: nowrap;
+    will-change: transform, opacity;
+  }
+
+  .core-tag em {
+    font-style: normal;
+    color: var(--col-text-dim);
+  }
+
+  /* ── Crown reticle ── */
+  .core-reticle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 120px;
+    height: 120px;
+    opacity: 0;
+    will-change: transform, opacity;
+    background:
+      linear-gradient(var(--col-neon-amber), var(--col-neon-amber)) top left / 18px 2px,
+      linear-gradient(var(--col-neon-amber), var(--col-neon-amber)) top left / 2px 18px,
+      linear-gradient(var(--col-neon-amber), var(--col-neon-amber)) top right / 18px 2px,
+      linear-gradient(var(--col-neon-amber), var(--col-neon-amber)) top right / 2px 18px,
+      linear-gradient(var(--col-neon-amber), var(--col-neon-amber)) bottom left / 18px 2px,
+      linear-gradient(var(--col-neon-amber), var(--col-neon-amber)) bottom left / 2px 18px,
+      linear-gradient(var(--col-neon-amber), var(--col-neon-amber)) bottom right / 18px 2px,
+      linear-gradient(var(--col-neon-amber), var(--col-neon-amber)) bottom right / 2px 18px;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 0 6px rgba(255, 136, 0, 0.7));
+  }
+
+  .core-reticle::after {
+    content: "";
+    position: absolute;
+    inset: 38%;
+    border: 1px dashed rgba(255, 136, 0, 0.6);
+    border-radius: 50%;
+    animation: reticle-spin 6s linear infinite;
+  }
+
+  .core-reticle.is-critical {
+    filter: drop-shadow(0 0 10px rgba(255, 32, 64, 0.9));
+  }
+
+  .core-reticle.is-critical::after {
+    border-color: var(--col-neon-red);
+    animation-duration: 1.2s;
+  }
+
+  .reticle-label {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    font-size: 0.58rem;
+    letter-spacing: 0.2em;
+    color: var(--col-neon-amber);
+    white-space: nowrap;
+  }
+
+  .core-reticle.is-critical .reticle-label {
+    color: var(--col-neon-red);
+  }
+
+  @keyframes reticle-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ── Hazard band ── */
+  .core-hazard {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 64px;
+    opacity: 0;
+    overflow: hidden;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-image: repeating-linear-gradient(-45deg, var(--col-neon-amber) 0 10px, #0a0306 10px 20px) 6;
+    background: rgba(10, 3, 6, 0.78);
+  }
+
+  .hazard-track {
+    display: flex;
+    width: max-content;
+    animation: hazard-scroll 14s linear infinite;
+  }
+
+  .hazard-track span {
+    padding: 6px 28px;
+    font-size: 0.64rem;
+    letter-spacing: 0.3em;
+    color: var(--col-neon-amber);
+    white-space: nowrap;
+  }
+
+  @keyframes hazard-scroll {
+    to { transform: translateX(-50%); }
+  }
+
+  /* ── Captions ── */
+  .core-caption {
+    position: absolute;
+    left: 40px;
+    bottom: 48px;
+    max-width: min(520px, calc(100% - 80px));
+  }
+
+  .caption-index {
+    font-size: 0.62rem;
+    letter-spacing: 0.3em;
+    color: var(--col-neon-amber);
+    margin-bottom: 6px;
+  }
+
+  .caption-title {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(1.6rem, 4.4vw, 3.2rem);
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--col-heading);
+    text-shadow: 0 0 30px rgba(255, 136, 0, 0.25);
+    margin-bottom: 10px;
+    min-height: 1.05em;
+  }
+
+  .core[data-phase="2"] .caption-title {
+    color: var(--col-neon-amber);
+  }
+
+  .core[data-phase="3"] .caption-title {
+    color: var(--col-neon-green);
+    text-shadow: 0 0 30px rgba(0, 255, 65, 0.3);
+  }
+
+  .caption-sub {
+    font-family: var(--font-body);
+    font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+    color: var(--col-text);
+    line-height: 1.5;
+    min-height: 3em;
+  }
+
+  .core-hint {
+    position: absolute;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    color: var(--col-neon-green);
+    animation: hint-pulse 1.8s ease-in-out infinite;
+    white-space: nowrap;
+  }
+
+  @keyframes hint-pulse {
+    50% { opacity: 0.35; }
+  }
+
+  /* ── Loader ── */
+  .core-loader {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(320px, 80vw);
+    text-align: center;
+    font-family: var(--font-mono);
+    transition: opacity 0.8s ease;
+  }
+
+  .core-loader.is-done {
+    opacity: 0;
+  }
+
+  .loader-text,
+  .loader-pct {
+    font-size: 0.62rem;
+    letter-spacing: 0.25em;
+    color: var(--col-neon-green);
+  }
+
+  .loader-bar {
+    margin: 10px 0 8px;
+    height: 6px;
+    border: 1px solid rgba(0, 255, 65, 0.35);
+    padding: 1px;
+  }
+
+  .loader-bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: repeating-linear-gradient(90deg, var(--col-neon-green) 0 6px, transparent 6px 8px);
+    transition: width 0.2s ease;
+  }
+
+  .core-loader.is-error .loader-text,
+  .core-loader.is-error .loader-pct {
+    color: var(--col-neon-red);
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 768px) {
+    .core {
+      height: 440vh;
+    }
+
+    .hud-corner--tl,
+    .hud-corner--tr {
+      top: 66px;
+    }
+
+    .hud-panel {
+      top: 76px;
+    }
+
+    .hud-panel--tl {
+      left: 18px;
+    }
+
+    .hud-panel--tr {
+      right: 18px;
+      min-width: 0;
+      padding: 8px 10px;
+    }
+
+    .tele-row {
+      font-size: 0.56rem;
+      gap: 10px;
+    }
+
+    .tele-row:nth-child(3),
+    .tele-gauge {
+      display: none;
+    }
+
+    .core-rail {
+      display: none;
+    }
+
+    .core-tag,
+    .core-callouts {
+      display: none;
+    }
+
+    .core-caption {
+      left: 18px;
+      right: 18px;
+      bottom: 40px;
+      max-width: none;
+    }
+
+    .core-hazard {
+      top: 56px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hazard-track,
+    .core-reticle::after,
+    .core-hint {
+      animation: none;
+    }
+  }
+</style>

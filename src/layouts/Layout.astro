@@ -1,6 +1,4 @@
 ---
-import AsciiHead from "../components/AsciiHead.astro";
-
 interface Props {
   title?: string;
   description?: string;
@@ -68,8 +66,8 @@ const canonicalUrl = new URL(Astro.url.pathname, SITE_URL).href;
     />
   </head>
   <body>
-    <!-- Site-wide ASCII head, fixed behind all content -->
-    <AsciiHead />
+    <!-- Static backdrop, fixed behind all content -->
+    <div class="site-bg" aria-hidden="true"></div>
     <!-- Scanline overlay -->
     <div class="scanlines" aria-hidden="true"></div>
     <!-- Vignette -->
@@ -129,7 +127,18 @@ const canonicalUrl = new URL(Astro.url.pathname, SITE_URL).href;
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Slot content sits above the fixed AsciiHead background */
+  /* ── Backdrop ── */
+  .site-bg {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse at 50% 35%, #0a0205 0%, #030001 70%),
+      #020001;
+  }
+
+  /* Slot content sits above the fixed backdrop */
   .site-stack {
     position: relative;
     z-index: 1;

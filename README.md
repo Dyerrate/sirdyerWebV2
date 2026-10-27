@@ -9,7 +9,7 @@ This is the source for my personal portfolio site — built fast, kept lean, and s
 ## ? Features
 
 - **Hero section** with a full-bleed looping video background, animated grid, and HUD corner brackets
-- **ASCII art head** rendered live in the browser
+- **Gaussian splat portrait** that spins up on scroll and vents creativity as ASCII art
 - **3D Three.js scene** for that extra dimension of personality
 - **Vision, Experience & Projects** sections for the substance
 - **Dynamic OG image** and Apple Touch Icon generated at build time via Satori + resvg
@@ -23,6 +23,7 @@ This is the source for my personal portfolio site — built fast, kept lean, and s
 | :--- | :--- |
 | Framework | [Astro v6](https://astro.build) |
 | 3D Graphics | [Three.js](https://threejs.org) |
+| Gaussian Splats | [Spark](https://sparkjs.dev) |
 | OG Image Generation | [Satori](https://github.com/vercel/satori) + [@resvg/resvg-js](https://github.com/yisibl/resvg-js) |
 | Typography | [@fontsource/orbitron](https://fontsource.org/fonts/orbitron), [@fontsource/share-tech-mono](https://fontsource.org/fonts/share-tech-mono) |
 | Runtime | Node.js >= 22.12 |
@@ -40,7 +41,7 @@ No UI framework, no unnecessary runtime JS — just Astro islands where needed and
 +-- src/
 ¦   +-- assets/           # Build-time assets (fonts for OG generation)
 ¦   +-- components/       # Astro components
-¦   ¦   +-- AsciiHead.astro
+¦   ¦   +-- CreativeCore.astro
 ¦   ¦   +-- Experience.astro
 ¦   ¦   +-- Footer.astro
 ¦   ¦   +-- Hero.astro
@@ -90,6 +91,7 @@ Then open http://localhost:4321 in your browser.
 | `npm run build` | Build for production to `./dist/` |
 | `npm run preview` | Preview the production build locally |
 | `npm run astro ...` | Run Astro CLI commands |
+| `npm run splat` | Re-encode the raw capture `splats/person.ply` (gitignored) into `public/splats/person.spz` |
 
 ---
 
