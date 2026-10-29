@@ -5,11 +5,13 @@
 //   02 SPIN-UP  — head accelerates through two turns, crown heats up
 //   03 OVERFLOW — crown splats break loose and vent upward as ASCII glyphs
 //   04 RENDER   — camera pulls back, the frame resolves into ASCII
+// Past the end, that final ASCII frame stays on as a dimmed, fixed backdrop
+// behind the rest of the page, the crown still venting green.
 ---
 
 <section id="core" class="core" aria-labelledby="coreTitle">
   <div class="core-sticky" id="coreSticky">
-    <div class="core-bg" aria-hidden="true"></div>
+    <div class="core-bg" id="coreBg" aria-hidden="true"></div>
     <canvas class="core-canvas" id="coreCanvas" aria-hidden="true"></canvas>
 
     <svg class="core-callouts" id="coreCallouts" aria-hidden="true">
@@ -77,6 +79,9 @@
       <p class="loader-pct" id="loaderPct">000%</p>
     </div>
   </div>
+
+  <!-- The canvas moves in here once the stage lets go, and keeps rendering. -->
+  <div class="core-afterglow" id="coreAfterglow" aria-hidden="true"></div>
 </section>
 
 <script>
@@ -335,6 +340,7 @@
     uniform float uTime;
     uniform float uGlitch;
     uniform vec3 uTint;
+    uniform float uTintMix;
     varying vec2 vUv;
 
     float hash12(vec2 p) {
@@ -378,7 +384,7 @@
       float lvl = clamp(pow(lum, 0.75) * 1.15, 0.0, 0.999) * 10.0;
       float m = glyphAt(uRamp[int(lvl)], cuv);
       vec3 base = cs.a > 0.001 ? cs.rgb / cs.a : vec3(0.0);
-      vec3 asciiRgb = mix(base, uTint, 0.45) * (0.75 + lum * 1.4);
+      vec3 asciiRgb = mix(base, uTint, uTintMix) * (0.75 + lum * 1.4);
       vec4 ascii = vec4(asciiRgb * m, m * clamp(cs.a * 1.6, 0.0, 1.0));
 
       // Where ASCII takes over: scan band, everything above the crown, or all.
@@ -511,6 +517,9 @@
       capTitle: $("capTitle"),
       capSub: $("capSub"),
       hint: $("coreHint"),
+      bg: $("coreBg"),
+      callouts: $("coreCallouts"),
+      afterglow: $("coreAfterglow"),
       loader: $("coreLoader"),
       loaderText: $("loaderText"),
       loaderFill: $("loaderFill"),
@@ -592,6 +601,9 @@
       red: linear("#ff2040"),
       hot: linear("#fff1d6"),
     };
+    const FOUNTAIN_PAL = [NEON.green, NEON.cyan, NEON.amber, NEON.red];
+    // In the afterglow the fountain drains to a single green family.
+    const GLOW_PAL = ["#00ff41", "#7dffa0", "#00c853", "#d4ffe0"].map(linear);
 
     const postMat = new THREE.ShaderMaterial({
       vertexShader: POST_VERT,
@@ -610,6 +622,7 @@
         uTime: { value: 0 },
         uGlitch: { value: 0 },
         uTint: { value: new THREE.Vector3(0.0, 1.0, 0.25) },
+        uTintMix: { value: 0.45 },
       },
       depthTest: false,
       depthWrite: false,
@@ -701,10 +714,10 @@
         uViewH: { value: 1 },
         uSize: { value: 0.024 },
         uHot: { value: NEON.hot },
-        uC0: { value: NEON.green },
-        uC1: { value: NEON.cyan },
-        uC2: { value: NEON.amber },
-        uC3: { value: NEON.red },
+        uC0: { value: NEON.green.clone() },
+        uC1: { value: NEON.cyan.clone() },
+        uC2: { value: NEON.amber.clone() },
+        uC3: { value: NEON.red.clone() },
         uSet: { value: BURST_SET },
       },
       transparent: true,
@@ -831,11 +844,28 @@
     let enterTarget = 0;
     let p = 0;
     let enter = 0;
+    let pastEnd = false;
+    let exitT = 0;
     function readScroll() {
       const rect = section!.getBoundingClientRect();
       const vh = window.innerHeight;
       pTarget = clamp01(-rect.top / Math.max(1, rect.height - vh));
       enterTarget = clamp01((vh - rect.top) / vh);
+      // How far past the point where the sticky stage lets go.
+      pastEnd = rect.bottom < vh;
+      exitT = clamp01((vh - rect.bottom) / (vh * 0.7));
+    }
+
+    // ── Afterglow: past the section the canvas leaves the sticky stage for a
+    // fixed layer under the rest of the page, so the stage scrolls away
+    // around it. Same spot on screen at the hand-off, so there's no jump. ──
+    const GLOW_OPACITY = isSmall ? 0.26 : 0.34;
+    let glowing = false;
+    function setGlow(on: boolean) {
+      if (on === glowing) return;
+      glowing = on;
+      if (on) ui.afterglow.appendChild(canvas!);
+      else sticky!.insertBefore(canvas!, ui.callouts);
     }
 
     function cameraAt(prog: number) {
@@ -896,6 +926,8 @@
 
     function frame(now: number) {
       rafId = requestAnimationFrame(frame);
+      // As a backdrop ~30 fps is plenty.
+      if (glowing && now - last < 31) return;
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       clock += dt * (reducedMotion ? 0.4 : 1);
@@ -904,12 +936,17 @@
       const k = 1 - Math.exp(-dt * 6);
       p += (pTarget - p) * k;
       enter += (enterTarget - enter) * k;
+      setGlow(pastEnd);
+      const glow = smooth(exitT);
+      ui.bg.style.opacity = `${1 - seg(pTarget, 0.94, 1)}`;
+      ui.afterglow.style.opacity = `${lerp(1, GLOW_OPACITY, glow)}`;
 
       // Head spin: two eased turns, then a slow sway back to the camera.
       const spinT = easeInOut(seg(p, 0.16, 0.66));
       const sway = Math.sin(seg(p, 0.66, 1) * Math.PI) * 0.3;
       const idle = Math.sin(clock * 0.5) * 0.05 * (1 - seg(p, 0.1, 0.18));
-      const yaw = YAW0 + spinT * TAU * 2 + sway + idle;
+      const drift = Math.sin(clock * 0.22) * 0.4 * glow;
+      const yaw = YAW0 + spinT * TAU * 2 + sway + idle + drift;
       head.rotation.y = yaw;
       head.position.y = 0.04 * spinT;
       rings.position.copy(head.position);
@@ -956,8 +993,12 @@
       fountainMat.uniforms.uTime.value = clock;
       fountainMat.uniforms.uBurst.value = burst;
       fountainMat.uniforms.uAmt.value = splatReady
-        ? seg(p, 0.45, 0.62) * (1 - 0.3 * seg(p, 0.92, 1))
+        ? seg(p, 0.45, 0.62) * (1 - 0.3 * seg(p, 0.92, 1) * (1 - glow))
         : 0;
+      const fu = fountainMat.uniforms;
+      [fu.uC0, fu.uC1, fu.uC2, fu.uC3].forEach((u, i) =>
+        u.value.copy(FOUNTAIN_PAL[i]).lerp(GLOW_PAL[i], glow),
+      );
 
       tmp.set(0, 0, 0);
       head.localToWorld(tmp);
@@ -982,6 +1023,7 @@
       pu.uTopY.value = crown.uvY;
       pu.uAsciiAll.value = seg(p, 0.92, 1.0);
       pu.uGlitch.value = glitch;
+      pu.uTintMix.value = lerp(0.45, 0.85, glow);
 
       renderer.setRenderTarget(sceneRT);
       renderer.clear();
@@ -989,7 +1031,8 @@
       renderer.setRenderTarget(null);
       renderer.render(postScene, postCam);
 
-      // ── HUD ──
+      // ── HUD (gone once the stage has scrolled away) ──
+      if (exitT >= 1) return;
       const nextPhase = PHASES.reduce((acc, ph, i) => (p >= ph.at ? i : acc), 0);
       if (nextPhase !== phase) {
         phase = nextPhase;
@@ -1041,11 +1084,11 @@
       cancelAnimationFrame(rafId);
     }
 
-    // Only render while the section is on screen.
+    // Render while the section is on screen, or below it (the afterglow).
     let onScreen = false;
     new IntersectionObserver(
       ([entry]) => {
-        onScreen = entry.isIntersecting;
+        onScreen = entry.isIntersecting || entry.boundingClientRect.bottom <= 0;
         if (onScreen) start();
         else stop();
       },
@@ -1114,6 +1157,14 @@
     top: 0;
     height: 18vh;
     background: linear-gradient(180deg, rgba(10, 10, 12, 1), transparent);
+  }
+
+  /* Fixed layer under the page's content; holds the canvas past the section. */
+  .core-afterglow {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
   }
 
   .core-canvas {
